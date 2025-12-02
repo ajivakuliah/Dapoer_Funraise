@@ -76,6 +76,16 @@ try {
     // 🔹 DATA UNTUK GRAFIK PRODUK TERLARIS (TOP 6 untuk grafik lingkaran)
     $produk_terlaris_grafik = [];
     
+    // Footer
+    $stmtFooter = $pdo->prepare("SELECT main_text, copyright_text FROM footer_section WHERE id = 1 AND is_active = 1");
+    $stmtFooter->execute();
+    $footerData = $stmtFooter->fetch(PDO::FETCH_ASSOC);
+    if (!$footerData) {
+        $footerData = [
+            'main_text' => 'Mendukung Expo Campus MAN 2 Samarinda',
+            'copyright_text' => '© 2025 <strong>Dapoer Funraise</strong>'
+        ];
+    }
     // Ambil semua pesanan selesai
     $stmt = $pdo->prepare("SELECT produk, total FROM pesanan WHERE status = 'selesai' AND created_at BETWEEN :start AND :end");
     $stmt->execute(['start' => $month_start, 'end' => $month_end]);
@@ -413,10 +423,10 @@ $bulan_ini = namaBulan($bulan_pilihan);
         margin-left: 260px;
         margin-top: 70px;
         padding: 30px;
+        padding-bottom: 0;
         min-height: calc(100vh - 70px);
         background: #f8f6fd;
       }
-
       .filter-section {
         background: white;
         padding: 22px 28px;
@@ -896,6 +906,29 @@ $bulan_ini = namaBulan($bulan_pilihan);
         font-size: 10px;
         color: #9180BB;
       }
+
+      /* FOOTER */
+      footer {
+          background: linear-gradient(180deg, #2a1f3d 100%, #5A46A2 0%);
+          color: rgba(255, 255, 255, 0.85);
+          text-align: center;
+          padding: 30px 20px;
+          font-size: 1.1rem;
+          font-weight: 500;
+          margin-left: 260px;
+          border-top: 1px solid #eae6ff;
+      }
+
+      footer strong {
+          color: #F9CC22;
+          font-weight: 700;
+      }
+
+      @media (max-width: 992px) {
+          footer {
+              margin-left: 0;
+          }
+      }
     </style>
 </head>
 <body>
@@ -1183,6 +1216,11 @@ $bulan_ini = namaBulan($bulan_pilihan);
             </div>
         </div>
     </main>
+
+    <!-- FOOTER -->
+    <footer>
+        <p><?= $footerData['copyright_text'] ?> — <?= $footerData['main_text'] ?></p>
+    </footer>
 
     <script>
         // Data untuk grafik dari PHP

@@ -4,13 +4,15 @@ require '../config.php';
 
 $error = $success = '';
 
-$uploadDir = 'admin/uploads/logo/';
+// Path upload yang benar (dari root project)
+$uploadDir = '../uploads/logo/';
 if (!is_dir($uploadDir)) {
     mkdir($uploadDir, 0755, true);
 }
 
 function deleteOldLogo($oldPath) {
-    $defaultLogo = 'admin/uploads/logo.png';
+    $defaultLogo = 'uploads/logo.png';
+    // Hapus file lama jika bukan default dan file ada
     if (!empty($oldPath) && $oldPath !== $defaultLogo && file_exists('../' . $oldPath)) {
         unlink('../' . $oldPath);
     }
@@ -19,8 +21,9 @@ function deleteOldLogo($oldPath) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim($_POST['business_name'] ?? 'Dapoer Funraise');
     $tag = trim($_POST['tagline'] ?? 'Cemilan rumahan yang bikin nagih!');
-    $logoPath = $_POST['current_logo'] ?? 'assets/logo.png';
+    $logoPath = $_POST['current_logo'] ?? 'uploads/logo.png';
 
+    // Proses upload file
     if (!empty($_FILES['logo_file']['name'])) {
         $file = $_FILES['logo_file'];
         $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
@@ -41,36 +44,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             };
 
             $newName = 'logo_' . time() . '_' . substr(md5(uniqid()), 0, 6) . '.' . $ext;
-            $targetPath = $uploadDir . $newName;
+            $targetPath = $uploadDir . $newName; // ../uploads/logo/xxx.jpg
 
             if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+                // Hapus logo lama
                 deleteOldLogo($_POST['current_logo'] ?? '');
-                $logoPath = 'assets/logo/' . $newName;
+                
+                // Simpan path relatif dari root (tanpa ../)
+                $logoPath = 'uploads/logo/' . $newName;
             } else {
                 $error = "Gagal menyimpan file ke server.";
             }
         }
     }
 
+    // Simpan ke database jika tidak ada error
     if (!$error) {
-        $stmt = $pdo->prepare("
-            INSERT INTO header (id, logo_path, business_name, tagline) 
-            VALUES (1, ?, ?, ?) 
-            ON DUPLICATE KEY UPDATE 
-                logo_path = VALUES(logo_path),
-                business_name = VALUES(business_name),
-                tagline = VALUES(tagline),
-                updated_at = NOW()
-        ");
-        $stmt->execute([$logoPath, $name, $tag]);
-        $success = "Header berhasil diperbarui!";
-        $data = compact('logoPath', 'name', 'tag');
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO header (id, logo_path, business_name, tagline) 
+                VALUES (1, ?, ?, ?) 
+                ON DUPLICATE KEY UPDATE 
+                    logo_path = VALUES(logo_path),
+                    business_name = VALUES(business_name),
+                    tagline = VALUES(tagline),
+                    updated_at = NOW()
+            ");
+            $stmt->execute([$logoPath, $name, $tag]);
+            $success = "Header berhasil diperbarui!";
+            
+            // Update data untuk preview
+            $data = [
+                'logo_path' => $logoPath,
+                'business_name' => $name,
+                'tagline' => $tag
+            ];
+        } catch (PDOException $e) {
+            $error = "Gagal menyimpan ke database: " . $e->getMessage();
+        }
     }
 }
 
+// Ambil data dari database
 $stmt = $pdo->query("SELECT * FROM header WHERE id = 1");
 $data = $stmt->fetch(PDO::FETCH_ASSOC) ?: [
-    'logo_path' => 'assets/logo.png',
+    'logo_path' => 'uploads/logo.png',
     'business_name' => 'Dapoer Funraise',
     'tagline' => 'Cemilan rumahan yang bikin nagih!'
 ];
@@ -226,6 +244,12 @@ $data = $stmt->fetch(PDO::FETCH_ASSOC) ?: [
             border-radius: 10px;
             background: #faf9ff;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: #f5f3ff;
         }
 
         .upload-area i {
@@ -444,6 +468,7 @@ $data = $stmt->fetch(PDO::FETCH_ASSOC) ?: [
                                 accept=".jpg,.jpeg,.png,.webp"
                             >
                         </div>
+                        <span class="help">Logo saat ini: <?= basename($data['logo_path']) ?></span>
                     </div>
                 </form>
             </div>
@@ -469,7 +494,7 @@ $data = $stmt->fetch(PDO::FETCH_ASSOC) ?: [
                         alt="Preview Logo"
                         class="preview-logo"
                         id="previewLogo"
-                        onerror="this.src='../assets/logo.png'; this.onerror=null;"
+                        onerror="this.src='../uploads/logo.png'; this.onerror=null;"
                     >
                 </div>
                 <div class="preview-name" id="previewName"><?= htmlspecialchars($data['business_name']) ?></div>
@@ -479,29 +504,80 @@ $data = $stmt->fetch(PDO::FETCH_ASSOC) ?: [
     </div>
 
     <script>
+        // Live preview untuk nama usaha
         document.getElementById('business_name').addEventListener('input', e => {
             document.getElementById('previewName').textContent = e.target.value || 'Nama Usaha';
         });
 
+        // Live preview untuk tagline
         document.getElementById('tagline').addEventListener('input', e => {
             document.getElementById('previewTag').textContent = e.target.value || 'Tagline';
         });
 
+        // Live preview untuk logo
         document.getElementById('logo_file').addEventListener('change', function(e) {
             const file = e.target.files[0];
             const uploadFileName = document.getElementById('uploadFileName');
             const previewLogo = document.getElementById('previewLogo');
             
             if (file) {
+                // Validasi ukuran file
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Ukuran file terlalu besar! Maksimal 2 MB.');
+                    this.value = '';
+                    uploadFileName.textContent = 'Klik atau seret file';
+                    return;
+                }
+
+                // Validasi tipe file
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Format file tidak didukung! Gunakan JPG, PNG, atau WebP.');
+                    this.value = '';
+                    uploadFileName.textContent = 'Klik atau seret file';
+                    return;
+                }
+
+                // Update nama file
                 let name = file.name;
                 if (name.length > 20) name = name.substring(0, 17) + '...';
                 uploadFileName.textContent = name;
 
+                // Preview gambar
                 const reader = new FileReader();
-                reader.onload = ev => previewLogo.src = ev.target.result;
+                reader.onload = ev => {
+                    previewLogo.src = ev.target.result;
+                };
                 reader.readAsDataURL(file);
             } else {
                 uploadFileName.textContent = 'Klik atau seret file';
+            }
+        });
+
+        // Drag and drop support
+        const uploadArea = document.getElementById('uploadArea');
+        
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--primary)';
+            uploadArea.style.background = '#f5f3ff';
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.style.borderColor = 'var(--soft)';
+            uploadArea.style.background = '#faf9ff';
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.style.borderColor = 'var(--soft)';
+            uploadArea.style.background = '#faf9ff';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('logo_file').files = files;
+                // Trigger change event
+                document.getElementById('logo_file').dispatchEvent(new Event('change'));
             }
         });
     </script>
