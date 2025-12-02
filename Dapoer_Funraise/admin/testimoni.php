@@ -6,42 +6,90 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
+// --------------------------------------------------------
+// 1. TANGKAP PARAMETER DARI URL (q, filter, page)
+// --------------------------------------------------------
 $page = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
+$q = trim($_GET['q'] ?? ''); // <--- MENANGKAP QUERY PENCARIAN BARU
 
 $filter = $_GET['filter'] ?? 'all';
-$where_clause = '';
+$where_clause = 'WHERE 1=1'; // Mulai dengan kondisi dasar
+$params = [];
+
 if ($filter === 'verified') {
-    $where_clause = 'WHERE is_verified = 1';
+    $where_clause .= ' AND is_verified = 1';
 } elseif ($filter === 'pending') {
-    $where_clause = 'WHERE is_verified = 0';
+    $where_clause .= ' AND is_verified = 0';
 }
 
+// 🔹 Logika Pencarian: mencari di kolom nama, produk, atau komentar
+if ($q !== '') {
+    $search_term = '%' . strtolower($q) . '%';
+    $where_clause .= ' AND (LOWER(nama) LIKE ? OR LOWER(nama_produk) LIKE ? OR LOWER(komentar) LIKE ?)';
+    $params = array_merge($params, [$search_term, $search_term, $search_term]);
+}
+
+
 try {
-    $total_stmt = $pdo->query("SELECT COUNT(*) FROM testimoni $where_clause");
-    $total = (int)$total_stmt->fetchColumn();
+    // --------------------------------------------------------
+    // 2. HITUNG STATS CARDS (Total, Verified, Pending) - TIDAK TERPENGARUH FILTER Q
+    // --------------------------------------------------------
+    $stats_counts = $pdo->query("
+        SELECT 
+            COUNT(*) AS total_all,
+            SUM(CASE WHEN is_verified = 1 THEN 1 ELSE 0 END) AS stats_verified,
+            SUM(CASE WHEN is_verified = 0 THEN 1 ELSE 0 END) AS stats_pending
+        FROM testimoni
+    ")->fetch(PDO::FETCH_ASSOC);
+
+    $total_all = (int)($stats_counts['total_all'] ?? 0);
+    $stats_verified = (int)($stats_counts['stats_verified'] ?? 0);
+    $stats_pending = (int)($stats_counts['stats_pending'] ?? 0);
+    
+    // --------------------------------------------------------
+    // 3. HITUNG TOTAL TERFILTER (untuk Pagination)
+    // --------------------------------------------------------
+    $count_sql = "SELECT COUNT(*) FROM testimoni $where_clause";
+    
+    $count_stmt = $pdo->prepare($count_sql);
+    $count_stmt->execute($params);
+    $total = (int)$count_stmt->fetchColumn(); 
+    
     $total_pages = max(1, ceil($total / $per_page));
     $page = min($page, $total_pages);
-
-    $stmt = $pdo->prepare("
+    $offset = ($page - 1) * $per_page; // Pastikan offset dihitung ulang jika page berubah
+    
+    // --------------------------------------------------------
+    // 4. AMBIL DATA TESTIMONI YANG SUDAH DIFILTER
+    // --------------------------------------------------------
+    $data_sql = "
         SELECT * FROM testimoni 
         $where_clause
         ORDER BY dikirim_pada DESC 
         LIMIT :limit OFFSET :offset
-    ");
+    ";
+    
+    $stmt = $pdo->prepare($data_sql);
+    
+    // Bind parameter q (jika ada) dan limit/offset
+    $param_index = 1;
+    foreach ($params as $p) {
+        $stmt->bindValue($param_index++, $p);
+    }
+    
     $stmt->bindValue(':limit', $per_page, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
     $stmt->execute();
     $testimoni = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $stats_verified = $pdo->query("SELECT COUNT(*) FROM testimoni WHERE is_verified = 1")->fetchColumn();
-    $stats_pending = $pdo->query("SELECT COUNT(*) FROM testimoni WHERE is_verified = 0")->fetchColumn();
 } catch (Exception $e) {
     error_log("Testimoni Error: " . $e->getMessage());
     $testimoni = [];
     $total = 0;
     $total_pages = 1;
+    $total_all = 0;
     $stats_verified = 0;
     $stats_pending = 0;
 }
@@ -86,60 +134,17 @@ $msg = $_GET['msg'] ?? '';
             width: 100vw;
         }
         
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            flex-wrap: wrap;
-            gap: 1.5rem;
-            background: var(--card);
-            padding: 1.2rem 1.5rem;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 1.5rem;
-        }
-
-        .page-title h1 {
-            font-size: 1.6rem;
-            font-weight: 600;
-            color: var(--primary);
-            margin: 0;
-        }
-
-        .page-title p {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 0.3rem;
-        }
-
-        .stats {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .stat {
-            text-align: center;
-            min-width: 90px;
-        }
-
-        .stat-value {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .stat-label {
-            font-size: 0.85rem;
-            color: #777;
-        }
-
         .controls {
             display: flex;
             flex-wrap: wrap;
             gap: 1rem;
             margin-bottom: 1.2rem;
             align-items: flex-end;
+        }
+        
+        .controls-top {
+            margin-bottom: 25px; 
+            align-items: center; /* Tambahkan ini agar semua elemen di controls sejajar */
         }
 
         .search-box {
@@ -163,30 +168,37 @@ $msg = $_GET['msg'] ?? '';
             border-color: var(--primary);
             box-shadow: 0 0 0 3px rgba(90, 70, 162, 0.1);
         }
-
-        .filter-tabs {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-        }
-
-        .filter-tab {
-            padding: 0.55rem 1rem;
+        
+        /* Gaya baru untuk tombol di controls */
+        .btn-action {
+            padding: 0.7rem 1.2rem;
+            border: none;
             border-radius: 8px;
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #444;
-            background: #f9f7ff;
-            border: 1px solid var(--border);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+            height: 40px; /* Samakan tinggi dengan input */
         }
 
-        .filter-tab:hover,
-        .filter-tab.active {
-            background: var(--primary);
+        .btn-search {
+            background-color: var(--primary);
             color: white;
-            border-color: var(--primary);
         }
+
+        .btn-search:hover {
+            background-color: var(--primary-dark, #3d2f73);
+        }
+
+        .btn-reset {
+            background-color: #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-reset:hover {
+            background-color: #cbd5e1;
+        }
+        /* Akhir gaya tombol baru */
 
         .alert {
             padding: 0.8rem 1rem;
@@ -215,14 +227,13 @@ $msg = $_GET['msg'] ?? '';
             font-size: 0.9rem;
         }
 
-        /* ✅ Tetap pertahankan lebar kolom tetap sesuai preferensi Anda */
-        th:nth-child(1), td:nth-child(1) { width: 7%;  }
-        th:nth-child(2), td:nth-child(2) { width: 12%; }
-        th:nth-child(3), td:nth-child(3) { width: 15%; }
-        th:nth-child(4), td:nth-child(4) { width: 15%; }
+        th:nth-child(1), td:nth-child(1) { width: 6%;  }
+        th:nth-child(2), td:nth-child(2) { width: 7%; }
+        th:nth-child(3), td:nth-child(3) { width: 12%; }
+        th:nth-child(4), td:nth-child(4) { width: 13%; }
         th:nth-child(5), td:nth-child(5) { width: 15%; }
-        th:nth-child(6), td:nth-child(6) { width: 28%; }
-        th:nth-child(7), td:nth-child(7) { width: 8%;  }
+        th:nth-child(6), td:nth-child(6) { width: 35%; }
+        th:nth-child(7), td:nth-child(7) { width: 12%;  }
 
         th {
             background: #f5f3ff;
@@ -243,13 +254,8 @@ $msg = $_GET['msg'] ?? '';
             line-height: 1.5;
         }
 
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        tr:hover {
-            background: #fbf9ff;
-        }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #fbf9ff; }
 
         .status-verified { color: var(--success); font-weight: 500; }
         .status-pending { color: var(--warning); font-weight: 500; }
@@ -272,15 +278,6 @@ $msg = $_GET['msg'] ?? '';
         .btn-unverify { background: var(--warning); color: #000; }
         .btn-delete   { background: var(--danger); }
 
-        .btn-verify:hover   { background: #059669; }
-        .btn-unverify:hover { background: #d97706; }
-        .btn-delete:hover   { background: #dc2626; }
-
-        .action-cell {
-            white-space: nowrap;
-            text-align: center;
-        }
-
         .no-data {
             text-align: center;
             padding: 2.5rem 1rem;
@@ -296,8 +293,7 @@ $msg = $_GET['msg'] ?? '';
             flex-wrap: wrap;
         }
 
-        .pagination a,
-        .pagination span {
+        .pagination a, .pagination span {
             display: flex;
             align-items: center;
             justify-content: center;
@@ -312,63 +308,126 @@ $msg = $_GET['msg'] ?? '';
             border: 1px solid var(--border);
         }
 
-        .pagination a:hover,
-        .pagination .active {
+        .pagination a:hover, .pagination .active {
             background: var(--primary);
             color: white;
             border-color: var(--primary);
         }
-
-        .pagination .disabled {
-            opacity: 0.4;
-            pointer-events: none;
+        
+        /* --- STAT CARD STYLES --- */
+        .stats-testimoni-wrapper {
+            display: flex;
+            justify-content: space-around;
+            gap: 15px;
+            margin-bottom: 25px;
         }
 
+        .stat-card-testi {
+            flex-grow: 1;
+            flex-basis: 220px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 12px 15px; 
+            border-radius: 12px;
+            background-color: var(--card);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .stat-icon-testi {
+            font-size: 2.5rem;
+            margin-right: 15px;
+            color: var(--primary);
+        }
+
+        .stat-content-testi {
+            display: flex;
+            flex-direction: column; 
+            align-items: center; 
+            flex-grow: 1;
+        }
+
+        .stat-value-testi {
+            font-size: 1.8rem;
+            font-weight: 600;
+            line-height: 1.1;
+            color: var(--text); 
+        }
+
+        .stat-label-testi {
+            font-size: 0.9rem;
+            margin-top: 5px;
+            color: #666;
+        }
+
+        .stat-card-testi.active {
+            background-color: var(--primary);
+            color: white; 
+        }
+
+        .stat-card-testi.active .stat-icon-testi,
+        .stat-card-testi.active .stat-value-testi,
+        .stat-card-testi.active .stat-label-testi {
+            color: #ffffff;
+        }
+        
         @media (max-width: 768px) {
-            .page-header { padding: 1rem; flex-direction: column; }
             .controls { flex-direction: column; }
+            .controls-top { align-items: stretch; } /* Di layar kecil, tombol bisa di bawah input */
+            .search-box { flex-direction: column; gap: 10px; }
+            .search-input { width: 100%; }
+            .btn-action { width: 100%; height: auto; padding: 10px; }
+            .stats-testimoni-wrapper { flex-direction: column; }
+            .stat-card-testi { flex-basis: auto; }
             th, td { padding: 0.9rem 0.8rem; font-size: 0.85rem; }
-            .action-btn { width: 28px; height: 28px; }
         }
     </style>
 </head>
 <body>
 
-<!-- ✅ FULL BLEED WRAPPER -->
 <div class="full-bleed">
-    <div class="page-header">
-        <div class="page-title">
-            <h1><i class="fas fa-comments"></i> Manajemen Testimoni</h1>
-            <p>Kelola testimoni pelanggan</p>
+    
+    <div class="stats-testimoni-wrapper">
+        <div class="stat-card-testi <?= $filter === 'all' ? 'active' : '' ?>" onclick="window.location.href='?filter=all&q=<?= urlencode($q) ?>&page=1'">
+            <div class="stat-icon-testi"><i class="fas fa-list-alt"></i></div>
+            <div class="stat-content-testi">
+                <div class="stat-value-testi"><?= $total_all ?></div>
+                <div class="stat-label-testi">Total</div>
+            </div>
         </div>
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value"><?= $total ?></div>
-                <div class="stat-label">Total</div>
+
+        <div class="stat-card-testi <?= $filter === 'verified' ? 'active' : '' ?>" onclick="window.location.href='?filter=verified&q=<?= urlencode($q) ?>&page=1'">
+            <div class="stat-icon-testi"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-content-testi">
+                <div class="stat-value-testi"><?= $stats_verified ?></div>
+                <div class="stat-label-testi">Terverifikasi</div>
             </div>
-            <div class="stat">
-                <div class="stat-value"><?= $stats_verified ?></div>
-                <div class="stat-label">Terverifikasi</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value"><?= $stats_pending ?></div>
-                <div class="stat-label">Menunggu</div>
+        </div>
+
+        <div class="stat-card-testi <?= $filter === 'pending' ? 'active' : '' ?>" onclick="window.location.href='?filter=pending&q=<?= urlencode($q) ?>&page=1'">
+            <div class="stat-icon-testi"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-content-testi">
+                <div class="stat-value-testi"><?= $stats_pending ?></div>
+                <div class="stat-label-testi">Menunggu</div>
             </div>
         </div>
     </div>
-
-    <div class="controls">
+    
+    <form class="controls controls-top" onsubmit="event.preventDefault(); submitSearch();">
         <div class="search-box">
-            <input type="text" id="searchInput" class="search-input" placeholder="Cari nama, produk, atau komentar...">
+            <input type="text" id="searchInput" class="search-input" placeholder="Cari nama, produk, atau komentar..." value="<?= htmlspecialchars($q) ?>">
         </div>
+        
+        <button type="submit" class="btn-action btn-search">
+            <i class="fas fa-search"></i> Cari
+        </button>
 
-        <div class="filter-tabs">
-            <a href="?filter=all&page=1" class="filter-tab <?= $filter === 'all' ? 'active' : '' ?>">Semua</a>
-            <a href="?filter=verified&page=1" class="filter-tab <?= $filter === 'verified' ? 'active' : '' ?>">Terverifikasi</a>
-            <a href="?filter=pending&page=1" class="filter-tab <?= $filter === 'pending' ? 'active' : '' ?>">Menunggu</a>
-        </div>
-    </div>
-
+        <button type="button" class="btn-action btn-reset" onclick="resetAll()">
+            <i class="fas fa-redo"></i> Reset
+        </button>
+    </form>
     <?php if ($msg): ?>
         <div class="alert">
             <i class="fas fa-check-circle"></i>
@@ -392,9 +451,7 @@ $msg = $_GET['msg'] ?? '';
             <tbody>
                 <?php if (!empty($testimoni)): ?>
                     <?php foreach ($testimoni as $t): ?>
-                    <tr data-nama="<?= htmlspecialchars(strtolower($t['nama'])) ?>"
-                        data-produk="<?= htmlspecialchars(strtolower($t['nama_produk'] ?? '')) ?>"
-                        data-komentar="<?= htmlspecialchars(strtolower($t['komentar'])) ?>">
+                    <tr>
                         <td><strong>#<?= (int)$t['id'] ?></strong></td>
                         <td>
                             <?php if ($t['is_verified']): ?>
@@ -408,15 +465,18 @@ $msg = $_GET['msg'] ?? '';
                         <td><?= htmlspecialchars($t['nama_produk'] ?? '-') ?></td>
                         <td><?= nl2br(htmlspecialchars($t['komentar'])) ?></td>
                         <td class="action-cell">
+                            <?php 
+                            $base_url = "toggle_verifikasi.php?id={$t['id']}&filter={$filter}&q=" . urlencode($q) . "&page={$page}";
+                            ?>
                             <?php if ($t['is_verified']): ?>
-                                <a href="toggle_verifikasi.php?id=<?= $t['id'] ?>&action=unverify&filter=<?= $filter ?>&page=<?= $page ?>"
+                                <a href="<?= $base_url ?>&action=unverify"
                                    class="action-btn btn-unverify"
                                    title="Batalkan verifikasi"
                                    onclick="return confirm('Batalkan verifikasi untuk <?= htmlspecialchars(addslashes($t['nama'])) ?>?')">
                                     <i class="fas fa-times"></i>
                                 </a>
                             <?php else: ?>
-                                <a href="toggle_verifikasi.php?id=<?= $t['id'] ?>&action=verify&filter=<?= $filter ?>&page=<?= $page ?>"
+                                <a href="<?= $base_url ?>&action=verify"
                                    class="action-btn btn-verify"
                                    title="Verifikasi"
                                    onclick="return confirm('Verifikasi testimoni dari <?= htmlspecialchars(addslashes($t['nama'])) ?>?')">
@@ -424,7 +484,7 @@ $msg = $_GET['msg'] ?? '';
                                 </a>
                             <?php endif; ?>
 
-                            <a href="hapus_testimoni.php?id=<?= $t['id'] ?>&filter=<?= $filter ?>&page=<?= $page ?>"
+                            <a href="hapus_testimoni.php?id=<?= $t['id'] ?>&filter=<?= $filter ?>&q=<?= urlencode($q) ?>&page=<?= $page ?>"
                                class="action-btn btn-delete"
                                title="Hapus"
                                onclick="return confirm('Hapus testimoni dari <?= htmlspecialchars(addslashes($t['nama'])) ?>?')">
@@ -435,7 +495,13 @@ $msg = $_GET['msg'] ?? '';
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="7" class="no-data">Tidak ada testimoni.</td>
+                        <td colspan="7" class="no-data">
+                            <?php if($q !== ''): ?>
+                                Tidak ditemukan testimoni untuk pencarian: "<strong><?= htmlspecialchars($q) ?></strong>"
+                            <?php else: ?>
+                                Tidak ada testimoni.
+                            <?php endif; ?>
+                        </td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -444,8 +510,12 @@ $msg = $_GET['msg'] ?? '';
 
     <?php if ($total_pages > 1): ?>
     <div class="pagination">
+        <?php 
+        $pagination_base_url = "?filter={$filter}&q=" . urlencode($q) . "&page="; 
+        ?>
+        
         <?php if ($page > 1): ?>
-            <a href="?filter=<?= $filter ?>&page=<?= $page - 1 ?>">&laquo;</a>
+            <a href="<?= $pagination_base_url . ($page - 1) ?>">&laquo;</a>
         <?php else: ?>
             <span class="disabled">&laquo;</span>
         <?php endif; ?>
@@ -454,24 +524,24 @@ $msg = $_GET['msg'] ?? '';
         $start = max(1, $page - 2);
         $end = min($total_pages, $page + 2);
         if ($start > 1) {
-            echo '<a href="?filter=' . $filter . '&page=1">1</a>';
+            echo '<a href="' . $pagination_base_url . '1">1</a>';
             if ($start > 2) echo '<span>⋯</span>';
         }
         for ($i = $start; $i <= $end; $i++) {
             if ($i == $page) {
                 echo '<span class="active">' . $i . '</span>';
             } else {
-                echo '<a href="?filter=' . $filter . '&page=' . $i . '">' . $i . '</a>';
+                echo '<a href="' . $pagination_base_url . $i . '">' . $i . '</a>';
             }
         }
         if ($end < $total_pages) {
             if ($end < $total_pages - 1) echo '<span>⋯</span>';
-            echo '<a href="?filter=' . $filter . '&page=' . $total_pages . '">' . $total_pages . '</a>';
+            echo '<a href="' . $pagination_base_url . $total_pages . '">' . $total_pages . '</a>';
         }
         ?>
 
         <?php if ($page < $total_pages): ?>
-            <a href="?filter=<?= $filter ?>&page=<?= $page + 1 ?>">&raquo;</a>
+            <a href="<?= $pagination_base_url . ($page + 1) ?>">&raquo;</a>
         <?php else: ?>
             <span class="disabled">&raquo;</span>
         <?php endif; ?>
@@ -480,41 +550,47 @@ $msg = $_GET['msg'] ?? '';
 </div>
 
 <script>
-document.getElementById('searchInput').addEventListener('input', function() {
-    const q = this.value.toLowerCase().trim();
-    const rows = document.querySelectorAll('#testimoniTable tbody tr:not(.no-data)');
-    let found = false;
+function submitSearch() {
+    const q = document.getElementById('searchInput').value.trim();
+    const url = new URL(window.location);
+    
+    // Hapus parameter page saat pencarian baru
+    url.searchParams.delete('page'); 
 
-    rows.forEach(row => {
-        if (!q) {
-            row.style.display = '';
-            found = true;
-            return;
-        }
+    // Atur parameter q
+    q ? url.searchParams.set('q', q) : url.searchParams.delete('q');
+    
+    // Langsung arahkan
+    window.location.href = url.toString();
+}
 
-        const nama = row.dataset.nama || '';
-        const produk = row.dataset.produk || '';
-        const komentar = row.dataset.komentar || '';
+function resetAll() {
+    const url = new URL(window.location);
+    url.searchParams.delete('q');
+    url.searchParams.delete('filter');
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
 
-        const match = nama.includes(q) || produk.includes(q) || komentar.includes(q);
-        row.style.display = match ? '' : 'none';
-        if (match) found = true;
-    });
-
-    const tbody = document.querySelector('#testimoniTable tbody');
-    const noData = document.querySelector('.no-data');
-
-    if (!found && rows.length > 0) {
-        if (!noData) {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `<td colspan="7" class="no-data">Tidak ditemukan: "<strong>${this.value}</strong>"</td>`;
-            tbody.innerHTML = '';
-            tbody.appendChild(tr);
-        }
-    } else if (noData) {
-        tbody.innerHTML = '';
-        rows.forEach(row => tbody.appendChild(row));
+document.addEventListener('DOMContentLoaded', function() {
+    // Tekan Enter di input langsung submit
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitSearch();
+            }
+        });
     }
+    
+    // Tambahkan kembali fungsi pencarian real-time untuk estetika (optional)
+    // Walaupun pencarian utama menggunakan tombol, ini bisa membantu feedback
+    // Hapus fungsi ini jika ingin pencarian murni lewat tombol.
+    /* searchInput.addEventListener('input', function() {
+         // Hapus fungsi filter real-time agar fokus ke tombol
+    });
+    */
 });
 </script>
 
