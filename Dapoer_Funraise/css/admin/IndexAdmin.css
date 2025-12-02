@@ -462,115 +462,14 @@ body {
     font-size: 15px;
 }
 
-@media (max-width: 992px) {
-    .sidebar {
-        transform: translateX(-100%);
-        width: 280px;
-    }
-
-    .sidebar.active {
-        transform: translateX(0);
-    }
-
-    .topbar {
-        left: 0;
-        padding: 0 20px;
-    }
-
-    .main-content {
-        margin-left: 0;
-        padding: 20px;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    }
-
-    .charts-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .chart-card {
-        padding: 20px;
-    }
-
-    .chart-container {
-        height: 280px;
-    }
-
-    .filter-section {
-        padding: 18px 22px;
-    }
-}
-
-@media (max-width: 768px) {
-    .topbar-left h2 {
-        font-size: 1.3rem;
-    }
-
-    .main-content {
-        padding: 16px;
-    }
-
-    .filter-section {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-group {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
-    .filter-select {
-        width: 100%;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: 18px;
-    }
-
-    .stat-card {
-        padding: 22px;
-    }
-
-    .stat-value {
-        font-size: 32px;
-    }
-
-    .charts-grid {
-        gap: 18px;
-    }
-
-    .chart-card {
-        padding: 18px;
-    }
-
-    .chart-container {
-        height: 250px;
-    }
-
-    .iframe-container iframe {
-        height: 70vh;
-        min-height: 500px;
-    }
-}
-
 .mobile-toggle {
     display: none;
     font-size: 24px;
-    color: #2a1f3d; /* UBAH WARNA TOMBOL AGAR TERLIHAT DI TOPBAR PUTIH */
+    color: #2a1f3d; 
     cursor: pointer;
     background: none;
     border: none;
     margin-right: 15px;
-}
-
-@media (max-width: 992px) {
-    .mobile-toggle {
-        display: block;
-    }
 }
 
 @keyframes fadeIn {
@@ -671,8 +570,158 @@ footer strong {
     font-weight: 700;
 }
 
+/* ================================ */
+/* MEDIA QUERIES START HERE */
+/* ================================ */
+
+@media (max-width: 1200px) {
+    /* Sudah didefinisikan di atas: .charts-grid { grid-template-columns: 1fr; } */
+}
+
 @media (max-width: 992px) {
+    .sidebar {
+        transform: translateX(-100%);
+        width: 280px;
+    }
+
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .topbar {
+        left: 0;
+        padding: 0 20px;
+    }
+    
+    /* Perbaikan agar logo dan menu terlihat jelas di topbar mobile */
+    .topbar-left {
+        display: flex;
+        align-items: center;
+    }
+    
+    .sidebar-brand {
+        padding: 19px 5px; /* Kurangi padding horizontal di sidebar brand saat mobile */
+    }
+
+    .main-content {
+        margin-left: 0;
+        padding: 20px;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-card {
+        padding: 20px;
+    }
+
+    .chart-container {
+        height: 280px;
+    }
+
+    .filter-section {
+        padding: 18px 22px;
+    }
+    
+    .mobile-toggle {
+        display: block;
+    }
+
     footer {
         margin-left: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    /* Perbaikan untuk sidebar-brand agar tidak tumpang tindih saat di sidebar */
+    .sidebar-brand h2 {
+        font-size: 1.3rem;
+        gap: 8px;
+    }
+    .sidebar-brand i {
+        font-size: 1.6rem;
+    }
+    
+    .topbar-left h2 {
+        font-size: 1.3rem;
+    }
+
+    .main-content {
+        padding: 16px;
+    }
+
+    .filter-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filter-select {
+        width: 100%;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .stat-card {
+        padding: 22px;
+    }
+
+    .stat-value {
+        font-size: 32px;
+    }
+
+    .charts-grid {
+        gap: 18px;
+    }
+
+    .chart-card {
+        padding: 18px;
+    }
+
+    .chart-container {
+        height: 250px;
+    }
+
+    .iframe-container iframe {
+        height: 70vh;
+        min-height: 500px;
+    }
+}
+
+@media (max-width: 576px) {
+    .stat-card {
+        padding: 18px;
+    }
+    .stat-value {
+        font-size: 28px;
+    }
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+    }
+    .user-profile {
+        padding: 6px 10px;
+        gap: 8px;
+    }
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    .user-info {
+        /* Sembunyikan role agar lebih ringkas */
+        display: none; 
     }
 }
