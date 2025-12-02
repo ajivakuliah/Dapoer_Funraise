@@ -7,29 +7,23 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Get kontak section data
-$section = null;
-$cards = [];
+// Get WhatsApp buttons data
+$whatsapp_buttons = [];
 
 try {
-    // Get section data - take first record
-    $stmt = $pdo->query("SELECT * FROM kontak_section ORDER BY id DESC LIMIT 1");
-    $section = $stmt->fetch(PDO::FETCH_ASSOC);
+    // Get WhatsApp buttons ordered by sort_order
+    $stmt = $pdo->query("SELECT * FROM whatsapp_buttons ORDER BY sort_order ASC, id DESC");
+    $whatsapp_buttons = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    if (!$section) {
-        // Create default
-        $stmt = $pdo->prepare("INSERT INTO kontak_section (title, subtitle) VALUES ('Kontak', 'Siap melayani pesanan Anda dengan senang hati')");
-        $stmt->execute();
-        $section = [
-            'id' => $pdo->lastInsertId(), 
-            'title' => 'Kontak', 
-            'subtitle' => 'Siap melayani pesanan Anda dengan senang hati'
-        ];
+    // Jika belum ada data, buat default
+    if (empty($whatsapp_buttons)) {
+        $stmt = $pdo->prepare("INSERT INTO whatsapp_buttons (button_text, whatsapp_number, is_active, sort_order) VALUES (?, ?, 1, 0)");
+        $stmt->execute(['Pesan Sekarang', '6283129704643']);
+        
+        // Ambil data lagi
+        $stmt = $pdo->query("SELECT * FROM whatsapp_buttons ORDER BY sort_order ASC, id DESC");
+        $whatsapp_buttons = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
-    
-    // Get cards ordered by sort_order
-    $stmt = $pdo->query("SELECT * FROM contact_cards ORDER BY sort_order ASC");
-    $cards = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
     die("Error: " . $e->getMessage());
@@ -37,101 +31,123 @@ try {
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (isset($_POST['update_section'])) {
-        // Update section title and subtitle
-        $title = trim($_POST['title']);
-        $subtitle = trim($_POST['subtitle']);
-        
-        $stmt = $pdo->prepare("UPDATE kontak_section SET title = ?, subtitle = ? WHERE id = ?");
-        if ($stmt->execute([$title, $subtitle, $section['id']])) {
-            $_SESSION['success'] = 'Judul dan subjudul berhasil diperbarui';
-            header('Location: kontak.php');
-            exit;
-        }
-        
-    } elseif (isset($_POST['update_card'])) {
-        // Update card
-        $card_id = (int)$_POST['card_id'];
-        $icon_class = trim($_POST['icon_class']);
-        $title = trim($_POST['card_title']);
-        $label = trim($_POST['label']);
-        $href = trim($_POST['href']);
-        $sort_order = (int)$_POST['sort_order'];
-        
-        $stmt = $pdo->prepare("UPDATE contact_cards SET icon_class = ?, title = ?, label = ?, href = ?, sort_order = ? WHERE id = ?");
-        if ($stmt->execute([$icon_class, $title, $label, $href, $sort_order, $card_id])) {
-            $_SESSION['success'] = 'Kontak berhasil diperbarui';
-            header('Location: kontak.php');
-            exit;
-        }
-        
-    } elseif (isset($_POST['add_card'])) {
-        // Add new card
-        $icon_class = trim($_POST['icon_class']);
-        $title = trim($_POST['card_title']);
-        $label = trim($_POST['label']);
-        $href = trim($_POST['href']);
+    if (isset($_POST['add_button'])) {
+        // Add new button - default tidak aktif (karena hanya satu yang aktif)
+        $button_text = trim($_POST['button_text']);
+        $whatsapp_number = trim($_POST['whatsapp_number']);
         
         // Get max sort_order and add 1
-        $stmt = $pdo->query("SELECT MAX(sort_order) as max_order FROM contact_cards");
+        $stmt = $pdo->query("SELECT MAX(sort_order) as max_order FROM whatsapp_buttons");
         $max = $stmt->fetch(PDO::FETCH_ASSOC);
         $sort_order = ($max['max_order'] ?? 0) + 1;
         
-        // Insert new card (active by default)
-        $stmt = $pdo->prepare("INSERT INTO contact_cards (icon_class, title, label, href, sort_order, is_active) VALUES (?, ?, ?, ?, ?, 1)");
-        if ($stmt->execute([$icon_class, $title, $label, $href, $sort_order])) {
-            $_SESSION['success'] = 'Kontak baru berhasil ditambahkan';
-            header('Location: kontak.php');
+        // Insert new button (TIDAK AKTIF secara default)
+        $stmt = $pdo->prepare("INSERT INTO whatsapp_buttons (button_text, whatsapp_number, sort_order, is_active) VALUES (?, ?, ?, 0)");
+        if ($stmt->execute([$button_text, $whatsapp_number, $sort_order])) {
+            $_SESSION['success'] = 'Tombol WhatsApp baru berhasil ditambahkan (status nonaktif)';
+            header('Location: whatsapp.php');
+            exit;
+        }
+        
+    } elseif (isset($_POST['update_button'])) {
+        // Update button
+        $button_id = (int)$_POST['button_id'];
+        $button_text = trim($_POST['button_text']);
+        $whatsapp_number = trim($_POST['whatsapp_number']);
+        $sort_order = (int)$_POST['sort_order'];
+        
+        $stmt = $pdo->prepare("UPDATE whatsapp_buttons SET button_text = ?, whatsapp_number = ?, sort_order = ? WHERE id = ?");
+        if ($stmt->execute([$button_text, $whatsapp_number, $sort_order, $button_id])) {
+            $_SESSION['success'] = 'Tombol WhatsApp berhasil diperbarui';
+            header('Location: whatsapp.php');
             exit;
         }
         
     } elseif (isset($_POST['toggle_active'])) {
-        // Toggle card active status
-        $card_id = (int)$_POST['card_id'];
+        // Toggle button active status - HANYA SATU YANG AKTIF
+        $button_id = (int)$_POST['button_id'];
         
         // Get current status
-        $stmt = $pdo->prepare("SELECT is_active FROM contact_cards WHERE id = ?");
-        $stmt->execute([$card_id]);
+        $stmt = $pdo->prepare("SELECT is_active FROM whatsapp_buttons WHERE id = ?");
+        $stmt->execute([$button_id]);
         $current = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($current) {
-            $new_status = $current['is_active'] ? 0 : 1;
-            $stmt = $pdo->prepare("UPDATE contact_cards SET is_active = ? WHERE id = ?");
-            if ($stmt->execute([$new_status, $card_id])) {
-                $status_text = $new_status ? 'diaktifkan' : 'dinonaktifkan';
-                $_SESSION['success'] = "Kontak $status_text";
-                header('Location: kontak.php');
-                exit;
+            // Jika ingin mengaktifkan tombol ini
+            if (!$current['is_active']) {
+                // Nonaktifkan SEMUA tombol lainnya terlebih dahulu
+                $stmt = $pdo->prepare("UPDATE whatsapp_buttons SET is_active = 0");
+                $stmt->execute();
+                
+                // Aktifkan tombol yang dipilih
+                $stmt = $pdo->prepare("UPDATE whatsapp_buttons SET is_active = 1 WHERE id = ?");
+                if ($stmt->execute([$button_id])) {
+                    $_SESSION['success'] = "Tombol WhatsApp diaktifkan (tombol lain otomatis dinonaktifkan)";
+                    header('Location: whatsapp.php');
+                    exit;
+                }
+            } else {
+                // Jika ingin menonaktifkan tombol ini
+                $stmt = $pdo->prepare("UPDATE whatsapp_buttons SET is_active = 0 WHERE id = ?");
+                if ($stmt->execute([$button_id])) {
+                    $_SESSION['success'] = "Tombol WhatsApp dinonaktifkan";
+                    header('Location: whatsapp.php');
+                    exit;
+                }
             }
         }
         
     } elseif (isset($_POST['update_order'])) {
         // Update sort order
-        $card_id = (int)$_POST['card_id'];
+        $button_id = (int)$_POST['button_id'];
         $sort_order = (int)$_POST['sort_order'];
         
-        $stmt = $pdo->prepare("UPDATE contact_cards SET sort_order = ? WHERE id = ?");
-        if ($stmt->execute([$sort_order, $card_id])) {
+        $stmt = $pdo->prepare("UPDATE whatsapp_buttons SET sort_order = ? WHERE id = ?");
+        if ($stmt->execute([$sort_order, $button_id])) {
             $_SESSION['success'] = 'Urutan berhasil diupdate';
-            header('Location: kontak.php');
+            header('Location: whatsapp.php');
             exit;
         }
         
-    } elseif (isset($_POST['delete_card'])) {
-        // Delete card
-        $card_id = (int)$_POST['card_id'];
+    } elseif (isset($_POST['delete_button'])) {
+        // Delete button
+        $button_id = (int)$_POST['button_id'];
         
-        // Delete from database
-        $stmt = $pdo->prepare("DELETE FROM contact_cards WHERE id = ?");
-        if ($stmt->execute([$card_id])) {
-            $_SESSION['success'] = 'Kontak berhasil dihapus';
-            header('Location: kontak.php');
-            exit;
+        // Cek apakah tombol yang akan dihapus adalah yang aktif
+        $stmt = $pdo->prepare("SELECT is_active FROM whatsapp_buttons WHERE id = ?");
+        $stmt->execute([$button_id]);
+        $button = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($button && $button['is_active']) {
+            // Jika yang aktif dihapus, aktifkan tombol pertama yang tersisa
+            $stmt = $pdo->prepare("DELETE FROM whatsapp_buttons WHERE id = ?");
+            if ($stmt->execute([$button_id])) {
+                // Aktifkan tombol pertama setelah penghapusan
+                $stmt = $pdo->query("SELECT id FROM whatsapp_buttons ORDER BY sort_order ASC, id ASC LIMIT 1");
+                $first_button = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($first_button) {
+                    $stmt = $pdo->prepare("UPDATE whatsapp_buttons SET is_active = 1 WHERE id = ?");
+                    $stmt->execute([$first_button['id']]);
+                }
+                
+                $_SESSION['success'] = 'Tombol WhatsApp berhasil dihapus. Tombol lain otomatis diaktifkan.';
+                header('Location: whatsapp.php');
+                exit;
+            }
+        } else {
+            // Jika bukan yang aktif, hapus saja
+            $stmt = $pdo->prepare("DELETE FROM whatsapp_buttons WHERE id = ?");
+            if ($stmt->execute([$button_id])) {
+                $_SESSION['success'] = 'Tombol WhatsApp berhasil dihapus';
+                header('Location: whatsapp.php');
+                exit;
+            }
         }
     }
     
-    // If there's an error, redirect with error message
-    header('Location: kontak.php');
+    // Jika ada error, redirect dengan error message
+    header('Location: whatsapp.php');
     exit;
 }
 
@@ -144,15 +160,24 @@ if (isset($_SESSION['success'])) unset($_SESSION['success']);
 if (isset($_SESSION['error'])) unset($_SESSION['error']);
 
 // Count statistics
-$active_count = count(array_filter($cards, fn($card) => $card['is_active']));
-$inactive_count = count($cards) - $active_count;
+$active_count = count(array_filter($whatsapp_buttons, fn($button) => $button['is_active']));
+$inactive_count = count($whatsapp_buttons) - $active_count;
+
+// Find active button
+$active_button = null;
+foreach ($whatsapp_buttons as $button) {
+    if ($button['is_active']) {
+        $active_button = $button;
+        break;
+    }
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kontak - Admin</title>
+    <title>Tombol WhatsApp - Admin</title>
     <style>
         * {
             margin: 0;
@@ -176,7 +201,6 @@ $inactive_count = count($cards) - $active_count;
             overflow: visible;
             margin:0;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-            
         }
         
         .header-container {
@@ -252,7 +276,7 @@ $inactive_count = count($cards) - $active_count;
             font-size: 14px;
         }
         
-        .input-text, .textarea {
+        .input-text {
             width: 100%;
             padding: 12px 16px;
             border: 2px solid #e0e6ed;
@@ -262,12 +286,7 @@ $inactive_count = count($cards) - $active_count;
             background: #f8f9fa;
         }
         
-        .textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-        
-        .input-text:focus, .textarea:focus {
+        .input-text:focus {
             outline: none;
             border-color: #b64b62;
             background: white;
@@ -356,51 +375,66 @@ $inactive_count = count($cards) - $active_count;
             justify-content: center;
         }
         
-        /* Backgrounds Grid Style from hero.php - 4 cards per row */
-        .backgrounds-grid {
+        /* WhatsApp Buttons Grid Style - 4 cards per row */
+        .buttons-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 20px;
             margin-top: 20px;
         }
         
-        .bg-card {
+        .button-card {
             border: 2px solid #e0e6ed;
             border-radius: 10px;
             overflow: hidden;
             transition: all 0.3s;
             background: white;
-            height: 210px; /* Compact height for 4 cards per row */
+            height: 240px; /* Slightly taller for WhatsApp buttons */
             display: flex;
             flex-direction: column;
             margin: 0;
         }
         
-        .bg-card.active {
-            border-color: #27ae60;
-            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.2);
+        .button-card.active {
+            border-color: #25D366;
+            box-shadow: 0 0 0 3px rgba(37, 211, 102, 0.2);
         }
         
-        .step-icon {
+        .button-card.active::before {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #25D366;
+            color: white;
+            text-align: center;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 3px;
+            letter-spacing: 0.5px;
+            z-index: 5;
+        }
+        
+        .button-icon {
             width: 100%;
-            height: 90px; /* Slightly smaller icon area */
+            height: 100px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #f0e6ff, #e6f7ff);
-            color: #5a46a2;
-            font-size: 45px; /* Smaller icon */
+            background: linear-gradient(135deg, #dcf8c6, #ffffff);
+            color: #25D366;
+            font-size: 45px;
             border-bottom: 1px solid #e0e6ed;
         }
         
-        .bg-info {
-            padding: 12px;
+        .button-info {
+            padding: 15px 12px 12px;
             flex-grow: 1;
             display: flex;
             flex-direction: column;
         }
         
-        .bg-header {
+        .button-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -437,12 +471,12 @@ $inactive_count = count($cards) - $active_count;
             gap: 3px;
         }
         
-        .step-title {
+        .button-title {
             font-size: 13px;
             font-weight: 600;
             color: #2c3e50;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             line-height: 1.3;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -452,7 +486,7 @@ $inactive_count = count($cards) - $active_count;
             min-height: 10px;
         }
         
-        .step-label {
+        .button-number {
             font-size: 11px;
             color: #6c757d;
             text-align: center;
@@ -462,14 +496,14 @@ $inactive_count = count($cards) - $active_count;
             white-space: nowrap;
         }
         
-        .bg-actions {
+        .button-actions {
             display: flex;
             gap: 4px;
             justify-content: center;
             margin-top: auto;
         }
         
-        .bg-actions form {
+        .button-actions form {
             margin: 0;
         }
         
@@ -478,7 +512,7 @@ $inactive_count = count($cards) - $active_count;
             padding: 20px;
             border-radius: 10px;
             margin-bottom: 25px;
-            border: 2px dashed #b64b62;
+            border: 2px dashed #25D366;
         }
         
         .empty-state {
@@ -649,7 +683,7 @@ $inactive_count = count($cards) - $active_count;
             margin-bottom: 5px;
         }
         
-        .modal .input-text, .modal .textarea {
+        .modal .input-text {
             padding: 10px 12px;
             font-size: 14px;
         }
@@ -666,20 +700,20 @@ $inactive_count = count($cards) - $active_count;
         }
         
         @media (max-width: 1200px) {
-            .backgrounds-grid {
+            .buttons-grid {
                 grid-template-columns: repeat(4, 1fr);
                 gap: 15px;
             }
         }
         
         @media (max-width: 992px) {
-            .backgrounds-grid {
+            .buttons-grid {
                 grid-template-columns: repeat(3, 1fr);
             }
         }
         
         @media (max-width: 768px) {
-            .backgrounds-grid {
+            .buttons-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
             
@@ -694,7 +728,7 @@ $inactive_count = count($cards) - $active_count;
         }
         
         @media (max-width: 576px) {
-            .backgrounds-grid {
+            .buttons-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -723,7 +757,7 @@ $inactive_count = count($cards) - $active_count;
 <body>
     <div class="container">
         <div class="header-container">
-            <h1 class="page-title"><i class="fas fa-address-book"></i> Kontak</h1>
+            <h1 class="page-title"><i class="fab fa-whatsapp"></i> Tombol WhatsApp</h1>
             <a href="pengaturan.php" class="btn-back">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>
@@ -741,149 +775,118 @@ $inactive_count = count($cards) - $active_count;
             </div>
         <?php endif; ?>
         
-        <!-- Edit Section Title -->
-        <div class="section">
-            <h2><i class="fas fa-heading"></i> Judul & Subjudul</h2>
-            <form method="POST">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="title">Judul:</label>
-                        <input type="text" id="title" name="title" 
-                            value="<?= htmlspecialchars($section['title']) ?>" 
-                            maxlength="150" required class="input-text"
-                            placeholder="Masukkan judul...">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="subtitle">Subjudul:</label>
-                        <input type="text" id="subtitle" name="subtitle" 
-                            value="<?= htmlspecialchars($section['subtitle']) ?>" 
-                            maxlength="255" required class="input-text"
-                            placeholder="Masukkan subjudul...">
-                    </div>
-                </div>
-                
-                <button type="submit" name="update_section" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Simpan Perubahan
-                </button>
-            </form>
-        </div>
-        
-        <!-- Contact Cards Management -->
+        <!-- WhatsApp Buttons Management -->
         <div class="section">
             <div class="section-header">
-                <h2><i class="fas fa-id-card"></i> Kartu Kontak <span class="badge-count"><?= count($cards) ?></span></h2>
+                <h2><i class="fas fa-comment-alt"></i> Daftar Tombol WhatsApp <span class="badge-count"><?= count($whatsapp_buttons) ?></span></h2>
                 <span class="info-text">
-                    <i class="fas fa-info-circle"></i> Aktif: <?= $active_count ?> | Nonaktif: <?= $inactive_count ?>
+                    <i class="fas fa-info-circle"></i> 
+                    Aktif: <?= $active_count ?> | Nonaktif: <?= $inactive_count ?>
+                    <?php if ($active_button): ?>
+                        | <strong>Aktif saat ini:</strong> "<?= htmlspecialchars($active_button['button_text']) ?>"
+                    <?php else: ?>
+                        | <strong class="text-danger">Tidak ada tombol aktif!</strong>
+                    <?php endif; ?>
                 </span>
             </div>
             
-            <!-- Add New Card -->
+            <!-- Add New Button -->
             <div class="add-form">
-                <h3><i class="fas fa-plus"></i> Tambah Kontak Baru</h3>
+                <h3><i class="fas fa-plus"></i> Tambah Tombol WhatsApp Baru</h3>
+                <p class="help-text" style="margin-bottom: 15px;">
+                    <i class="fas fa-exclamation-triangle text-warning"></i>
+                    Tombol baru akan ditambahkan dalam status <strong>NONAKTIF</strong>. 
+                    Untuk mengaktifkannya, klik tombol toggle pada card tombol.
+                </p>
                 <form method="POST">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="icon_class">Kelas Ikon FontAwesome:</label>
-                            <input type="text" id="icon_class" name="icon_class" 
-                                value="fa-phone" required class="input-text"
-                                placeholder="Contoh: fa-phone">
+                            <label for="button_text">Teks Tombol:</label>
+                            <input type="text" id="button_text" name="button_text" 
+                                value="Pesan Sekarang" required class="input-text"
+                                placeholder="Contoh: Pesan Sekarang" maxlength="100">
                             <span class="help-text">
-                                Gunakan kelas ikon FontAwesome (contoh: fa-phone, fa-envelope, fa-map-marker-alt)
+                                Teks yang akan ditampilkan pada tombol WhatsApp
                             </span>
                         </div>
                         
                         <div class="form-group">
-                            <label for="card_title">Judul Kontak:</label>
-                            <input type="text" id="card_title" name="card_title" 
-                                maxlength="100" required class="input-text"
-                                placeholder="Contoh: Telepon">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="label">Label/Teks:</label>
-                            <input type="text" id="label" name="label" 
-                                maxlength="100" required class="input-text"
-                                placeholder="Contoh: +62 812-3456-7890">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="href">Link/URL:</label>
-                            <input type="text" id="href" name="href" 
-                                maxlength="255" required class="input-text"
-                                placeholder="Contoh: tel:+6281234567890">
+                            <label for="whatsapp_number">Nomor WhatsApp:</label>
+                            <input type="text" id="whatsapp_number" name="whatsapp_number" 
+                                value="6283129704643" required class="input-text"
+                                placeholder="Contoh: 6283129704643" maxlength="20">
                             <span class="help-text">
-                                Untuk telepon: tel:+6281234567890 | Email: mailto:email@contoh.com | Lokasi: https://maps.google.com/...
+                                Nomor WhatsApp dengan kode negara (tanpa +)
                             </span>
                         </div>
                     </div>
                     
-                    <button type="submit" name="add_card" class="btn btn-success">
-                        <i class="fas fa-plus-circle"></i> Tambah Kontak
+                    <button type="submit" name="add_button" class="btn btn-success">
+                        <i class="fas fa-plus-circle"></i> Tambah Tombol WhatsApp (Nonaktif)
                     </button>
                 </form>
             </div>
             
-            <!-- Existing Cards - 4 cards per row -->
-            <?php if (empty($cards)): ?>
+            <!-- Existing Buttons - 4 cards per row -->
+            <?php if (empty($whatsapp_buttons)): ?>
                 <div class="empty-state">
-                    <i class="fas fa-address-book"></i>
-                    <h3>Belum ada kontak</h3>
-                    <p>Tambahkan kontak pertama Anda menggunakan form di atas</p>
+                    <i class="fab fa-whatsapp"></i>
+                    <h3>Belum ada tombol WhatsApp</h3>
+                    <p>Tambahkan tombol WhatsApp pertama Anda menggunakan form di atas</p>
                 </div>
             <?php else: ?>
-                <div class="backgrounds-grid">
-                    <?php foreach ($cards as $card): ?>
-                        <div class="bg-card <?= $card['is_active'] ? 'active' : '' ?>">
-                            <div class="step-icon">
-                                <i class="fa-solid <?= htmlspecialchars($card['icon_class']) ?>"></i>
+                <div class="buttons-grid">
+                    <?php foreach ($whatsapp_buttons as $button): ?>
+                        <div class="button-card <?= $button['is_active'] ? 'active' : '' ?>">
+                            <div class="button-icon">
+                                <i class="fab fa-whatsapp"></i>
                             </div>
                             
-                            <div class="bg-info">
-                                <div class="bg-header">
-                                    <span class="status-badge <?= $card['is_active'] ? 'status-active' : 'status-inactive' ?>">
-                                        <?= $card['is_active'] ? 'Aktif' : 'Non Aktif' ?>
+                            <div class="button-info">
+                                <div class="button-header">
+                                    <span class="status-badge <?= $button['is_active'] ? 'status-active' : 'status-inactive' ?>">
+                                        <?= $button['is_active'] ? 'AKTIF' : 'NONAKTIF' ?>
                                     </span>
                                     <span class="order-badge">
-                                        <i class="fas fa-sort-numeric-down"></i> <?= $card['sort_order'] ?>
+                                        <i class="fas fa-sort-numeric-down"></i> <?= $button['sort_order'] ?>
                                     </span>
                                 </div>
                                 
-                                <!-- Menampilkan judul dan label -->
-                                <div class="step-title">
-                                    <?= htmlspecialchars($card['title']) ?>
+                                <!-- Menampilkan teks tombol -->
+                                <div class="button-title">
+                                    <?= htmlspecialchars($button['button_text']) ?>
                                 </div>
                                 
-                                <div class="step-label">
-                                    <?= htmlspecialchars($card['label']) ?>
+                                <!-- Menampilkan nomor WhatsApp -->
+                                <div class="button-number">
+                                    <i class="fas fa-phone"></i> <?= htmlspecialchars($button['whatsapp_number']) ?>
                                 </div>
                                 
                                 <!-- 4 Tombol Aksi dalam 1 Baris -->
-                                <div class="bg-actions">
+                                <div class="button-actions">
                                     <!-- Tombol 1: Toggle Aktif/Nonaktif -->
                                     <form method="POST">
-                                        <input type="hidden" name="card_id" value="<?= $card['id'] ?>">
+                                        <input type="hidden" name="button_id" value="<?= $button['id'] ?>">
                                         <button type="submit" name="toggle_active" 
-                                                class="btn btn-xs <?= $card['is_active'] ? 'btn-success' : 'btn-secondary' ?>"
-                                                title="<?= $card['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>">
-                                            <i class="fas <?= $card['is_active'] ? 'fa-toggle-on' : 'fa-toggle-off' ?>"></i>
+                                                class="btn btn-xs <?= $button['is_active'] ? 'btn-success' : 'btn-secondary' ?>"
+                                                title="<?= $button['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>"
+                                                onclick="return confirm('<?= $button['is_active'] ? 'Nonaktifkan tombol ini?' : 'Aktifkan tombol ini? (Tombol aktif lainnya akan otomatis dinonaktifkan)' ?>')">
+                                            <i class="fas <?= $button['is_active'] ? 'fa-toggle-on' : 'fa-toggle-off' ?>"></i>
                                         </button>
                                     </form>
                                     
                                     <!-- Tombol 2: Edit -->
                                     <button type="button" class="btn btn-xs btn-warning" 
-                                            onclick="openEditModal(<?= $card['id'] ?>, '<?= addslashes($card['icon_class']) ?>', '<?= addslashes($card['title']) ?>', '<?= addslashes($card['label']) ?>', '<?= addslashes($card['href']) ?>', '<?= addslashes($card['sort_order']) ?>')" 
-                                            title="Edit Kontak">
+                                            onclick="openEditModal(<?= $button['id'] ?>, '<?= addslashes($button['button_text']) ?>', '<?= addslashes($button['whatsapp_number']) ?>', '<?= addslashes($button['sort_order']) ?>')" 
+                                            title="Edit Tombol">
                                         <i class="fas fa-edit"></i>
                                     </button>
                                     
                                     <!-- Tombol 3: Update Urutan -->
                                     <form method="POST" style="display: contents;">
-                                        <input type="hidden" name="card_id" value="<?= $card['id'] ?>">
+                                        <input type="hidden" name="button_id" value="<?= $button['id'] ?>">
                                         <div class="order-controls">
-                                            <input type="number" name="sort_order" value="<?= $card['sort_order'] ?>" 
+                                            <input type="number" name="sort_order" value="<?= $button['sort_order'] ?>" 
                                                     min="0" max="100" required class="order-input" title="Nomor urut">
                                             <button type="submit" name="update_order" class="btn btn-xs btn-secondary" title="Update urutan">
                                                 <i class="fas fa-sync-alt"></i>
@@ -892,9 +895,9 @@ $inactive_count = count($cards) - $active_count;
                                     </form>
                                     
                                     <!-- Tombol 4: Hapus -->
-                                    <form method="POST" onsubmit="return confirm('Hapus kontak ini?')" style="display: contents;">
-                                        <input type="hidden" name="card_id" value="<?= $card['id'] ?>">
-                                        <button type="submit" name="delete_card" class="btn btn-xs btn-danger" title="Hapus">
+                                    <form method="POST" onsubmit="return confirmDelete(<?= $button['id'] ?>, <?= $button['is_active'] ? 'true' : 'false' ?>)" style="display: contents;">
+                                        <input type="hidden" name="button_id" value="<?= $button['id'] ?>">
+                                        <button type="submit" name="delete_button" class="btn btn-xs btn-danger" title="Hapus">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </form>
@@ -911,51 +914,44 @@ $inactive_count = count($cards) - $active_count;
     <div id="editModal" class="modal">
         <div class="modal-content">
             <button class="close-btn" onclick="closeModal()">&times;</button>
-            <h3><i class="fas fa-edit"></i> Edit Kontak</h3>
+            <h3><i class="fas fa-edit"></i> Edit Tombol WhatsApp</h3>
             
             <form id="editForm" method="POST">
-                <input type="hidden" id="modalCardId" name="card_id">
+                <input type="hidden" id="modalButtonId" name="button_id">
                 
-                <!-- Baris 1: Ikon dan Judul -->
+                <!-- Baris 1: Teks Tombol dan Nomor -->
                 <div class="modal-row">
                     <div class="form-group">
-                        <label for="modalIconClass">Kelas Ikon:</label>
-                        <input type="text" id="modalIconClass" name="icon_class" 
-                            required class="input-text" placeholder="fa-phone">
+                        <label for="modalButtonText">Teks Tombol:</label>
+                        <input type="text" id="modalButtonText" name="button_text" 
+                            maxlength="100" required class="input-text"
+                            placeholder="Pesan Sekarang">
                     </div>
                     
                     <div class="form-group">
-                        <label for="modalCardTitle">Judul Kontak:</label>
-                        <input type="text" id="modalCardTitle" name="card_title" 
-                            maxlength="100" required class="input-text">
+                        <label for="modalWhatsappNumber">Nomor WhatsApp:</label>
+                        <input type="text" id="modalWhatsappNumber" name="whatsapp_number" 
+                            maxlength="20" required class="input-text"
+                            placeholder="6283129704643">
                     </div>
                 </div>
                 
-                <!-- Baris 2: Label dan Link -->
-                <div class="modal-row">
-                    <div class="form-group">
-                        <label for="modalLabel">Label/Teks:</label>
-                        <input type="text" id="modalLabel" name="label" 
-                            maxlength="100" required class="input-text">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="modalHref">Link/URL:</label>
-                        <input type="text" id="modalHref" name="href" 
-                            maxlength="255" required class="input-text">
-                    </div>
-                </div>
-                
-                <!-- Baris 3: Urutan -->
+                <!-- Baris 2: Urutan -->
                 <div class="form-group">
                     <label for="modalSortOrder">Urutan Tampil:</label>
                     <input type="number" id="modalSortOrder" name="sort_order" 
                         min="0" max="100" required class="input-text">
+                    <span class="help-text">
+                        Urutan untuk sorting (lebih kecil = lebih prioritas)
+                    </span>
                 </div>
                 
                 <div class="modal-actions">
-                    <button type="submit" name="update_card" class="btn btn-primary">
+                    <button type="submit" name="update_button" class="btn btn-primary">
                         <i class="fas fa-save"></i> Simpan Perubahan
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
+                        <i class="fas fa-times"></i> Batal
                     </button>
                 </div>
             </form>
@@ -963,12 +959,10 @@ $inactive_count = count($cards) - $active_count;
     </div>
     
     <script>
-        function openEditModal(id, iconClass, title, label, href, sortOrder) {
-            document.getElementById('modalCardId').value = id;
-            document.getElementById('modalIconClass').value = iconClass;
-            document.getElementById('modalCardTitle').value = title;
-            document.getElementById('modalLabel').value = label;
-            document.getElementById('modalHref').value = href;
+        function openEditModal(id, buttonText, whatsappNumber, sortOrder) {
+            document.getElementById('modalButtonId').value = id;
+            document.getElementById('modalButtonText').value = buttonText;
+            document.getElementById('modalWhatsappNumber').value = whatsappNumber;
             document.getElementById('modalSortOrder').value = sortOrder;
             
             // Show modal
@@ -988,6 +982,15 @@ $inactive_count = count($cards) - $active_count;
             }
         });
         
+        // Confirm delete with custom message
+        function confirmDelete(buttonId, isActive) {
+            if (isActive) {
+                return confirm('PERINGATAN! Tombol ini sedang AKTIF di website.\n\nMenghapusnya akan otomatis mengaktifkan tombol lain.\n\nLanjutkan menghapus?');
+            } else {
+                return confirm('Yakin ingin menghapus tombol WhatsApp ini?');
+            }
+        }
+        
         // Auto close alerts after 5 seconds
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');
@@ -998,15 +1001,23 @@ $inactive_count = count($cards) - $active_count;
             });
         }, 5000);
         
-        // Confirm before delete
-        document.querySelectorAll('form[onsubmit]').forEach(form => {
-            form.addEventListener('submit', function(e) {
-                if (this.querySelector('button[name="delete_card"]')) {
-                    if (!confirm('Yakin ingin menghapus kontak ini?')) {
+        // Toggle button confirmation
+        document.addEventListener('submit', function(e) {
+            if (e.target.querySelector('button[name="toggle_active"]')) {
+                const form = e.target;
+                const button = form.querySelector('button[name="toggle_active"]');
+                const isActive = button.classList.contains('btn-success');
+                
+                if (isActive) {
+                    if (!confirm('Nonaktifkan tombol WhatsApp ini?')) {
+                        e.preventDefault();
+                    }
+                } else {
+                    if (!confirm('Aktifkan tombol WhatsApp ini?\n\nTombol WhatsApp lain yang aktif akan otomatis dinonaktifkan.')) {
                         e.preventDefault();
                     }
                 }
-            });
+            }
         });
     </script>
 </body>

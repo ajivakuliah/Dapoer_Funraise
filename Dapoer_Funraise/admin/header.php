@@ -1,585 +1,644 @@
 <?php
-// admin/header.php
-require '../config.php';
+session_start();
+require_once '../config.php';
 
-$error = $success = '';
-
-// Path upload yang benar (dari root project)
-$uploadDir = '../uploads/logo/';
-if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+if (!isset($_SESSION['username'])) {
+    header('Location: ../login.php');
+    exit;
 }
 
-function deleteOldLogo($oldPath) {
-    $defaultLogo = 'uploads/logo.png';
-    // Hapus file lama jika bukan default dan file ada
-    if (!empty($oldPath) && $oldPath !== $defaultLogo && file_exists('../' . $oldPath)) {
-        unlink('../' . $oldPath);
+// Get header data
+$header = null;
+
+try {
+    // Get header data - ambil data pertama saja
+    $stmt = $pdo->query("SELECT * FROM header ORDER BY id DESC LIMIT 1");
+    $header = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$header) {
+        // Create default
+        $stmt = $pdo->prepare("INSERT INTO header (logo_path, business_name, tagline) VALUES (?, ?, ?)");
+        $stmt->execute([
+            'assets/logo.png',
+            'Dapoer Funraise',
+            'Cemilan rumahan yang bikin nagih!'
+        ]);
+        $header = [
+            'id' => $pdo->lastInsertId(), 
+            'logo_path' => 'assets/logo.png',
+            'business_name' => 'Dapoer Funraise',
+            'tagline' => 'Cemilan rumahan yang bikin nagih!',
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
     }
+    
+} catch (PDOException $e) {
+    die("Error: " . $e->getMessage());
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name = trim($_POST['business_name'] ?? 'Dapoer Funraise');
-    $tag = trim($_POST['tagline'] ?? 'Cemilan rumahan yang bikin nagih!');
-    $logoPath = $_POST['current_logo'] ?? 'uploads/logo.png';
-
-    // Proses upload file
-    if (!empty($_FILES['logo_file']['name'])) {
-        $file = $_FILES['logo_file'];
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-        $maxSize = 2 * 1024 * 1024;
-
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            $error = "Terjadi kesalahan saat upload.";
-        } elseif (!in_array($file['type'], $allowedTypes)) {
-            $error = "Format gambar tidak didukung. Gunakan JPG, PNG, atau WebP.";
-        } elseif ($file['size'] > $maxSize) {
-            $error = "Ukuran gambar terlalu besar (maks. 2 MB).";
-        } else {
-            $ext = match ($file['type']) {
-                'image/jpeg' => 'jpg',
-                'image/png' => 'png',
-                'image/webp' => 'webp',
-                default => 'jpg'
-            };
-
-            $newName = 'logo_' . time() . '_' . substr(md5(uniqid()), 0, 6) . '.' . $ext;
-            $targetPath = $uploadDir . $newName; // ../uploads/logo/xxx.jpg
-
-            if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-                // Hapus logo lama
-                deleteOldLogo($_POST['current_logo'] ?? '');
-                
-                // Simpan path relatif dari root (tanpa ../)
-                $logoPath = 'uploads/logo/' . $newName;
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['update_header'])) {
+        // Update header data
+        $business_name = trim($_POST['business_name']);
+        $tagline = trim($_POST['tagline']);
+        
+        // Handle logo upload
+        $logo_path = $header['logo_path'];
+        
+        if (isset($_FILES['logo']) && $_FILES['logo']['error'] == 0) {
+            $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            $file_name = $_FILES['logo']['name'];
+            $file_tmp = $_FILES['logo']['tmp_name'];
+            $file_size = $_FILES['logo']['size'];
+            $file_ext = strtolower(pathinfo($file_name, PATHINFO_EXTENSION));
+            
+            // Check file extension
+            if (in_array($file_ext, $allowed_extensions)) {
+                // Check file size (max 2MB)
+                if ($file_size <= 2097152) {
+                    // Generate unique file name
+                    $new_file_name = 'logo_' . time() . '.' . $file_ext;
+                    $upload_path = '../assets/' . $new_file_name;
+                    
+                    // Upload file
+                    if (move_uploaded_file($file_tmp, $upload_path)) {
+                        // Delete old logo if exists and not default
+                        if ($logo_path != 'assets/logo.png' && file_exists('../' . $logo_path)) {
+                            unlink('../' . $logo_path);
+                        }
+                        $logo_path = 'assets/' . $new_file_name;
+                        $_SESSION['success'] = 'Logo berhasil diupload';
+                    } else {
+                        $_SESSION['error'] = 'Gagal mengupload logo';
+                    }
+                } else {
+                    $_SESSION['error'] = 'Ukuran file terlalu besar (max 2MB)';
+                }
             } else {
-                $error = "Gagal menyimpan file ke server.";
+                $_SESSION['error'] = 'Format file tidak didukung (hanya JPG, PNG, GIF, WebP)';
             }
         }
-    }
-
-    // Simpan ke database jika tidak ada error
-    if (!$error) {
-        try {
-            $stmt = $pdo->prepare("
-                INSERT INTO header (id, logo_path, business_name, tagline) 
-                VALUES (1, ?, ?, ?) 
-                ON DUPLICATE KEY UPDATE 
-                    logo_path = VALUES(logo_path),
-                    business_name = VALUES(business_name),
-                    tagline = VALUES(tagline),
-                    updated_at = NOW()
-            ");
-            $stmt->execute([$logoPath, $name, $tag]);
-            $success = "Header berhasil diperbarui!";
-            
-            // Update data untuk preview
-            $data = [
-                'logo_path' => $logoPath,
-                'business_name' => $name,
-                'tagline' => $tag
-            ];
-        } catch (PDOException $e) {
-            $error = "Gagal menyimpan ke database: " . $e->getMessage();
+        
+        // Update database
+        $stmt = $pdo->prepare("UPDATE header SET logo_path = ?, business_name = ?, tagline = ?, updated_at = NOW() WHERE id = ?");
+        if ($stmt->execute([$logo_path, $business_name, $tagline, $header['id']])) {
+            $_SESSION['success'] = 'Header berhasil diperbarui';
+            header('Location: header.php');
+            exit;
         }
     }
+    
+    // Jika ada error, redirect dengan error message
+    header('Location: header.php');
+    exit;
 }
 
-// Ambil data dari database
-$stmt = $pdo->query("SELECT * FROM header WHERE id = 1");
-$data = $stmt->fetch(PDO::FETCH_ASSOC) ?: [
-    'logo_path' => 'uploads/logo.png',
-    'business_name' => 'Dapoer Funraise',
-    'tagline' => 'Cemilan rumahan yang bikin nagih!'
-];
-?>
+// Tampilkan pesan success/error jika ada
+$success_msg = isset($_SESSION['success']) ? $_SESSION['success'] : '';
+$error_msg = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 
+// Hapus session messages setelah ditampilkan
+if (isset($_SESSION['success'])) unset($_SESSION['success']);
+if (isset($_SESSION['error'])) unset($_SESSION['error']);
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Header & Logo — Dapoer Funraise</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+    <title>Header - Admin</title>
     <style>
-        :root {
-            --primary: #5A46A2;
-            --secondary: #B64B62;
-            --accent: #F9CC22;
-            --bg-light: #FFF5EE;
-            --soft: #DFBEE0;
-            --text-muted: #9180BB;
-        }
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-
+        
         body {
-            font-family: 'Poppins', sans-serif;
-            background: #f1e8fdff;
-            color: #333;
-            font-size: 15px;
-            padding: 0;
-            margin: 0;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 0px;
+            width: 100%;
         }
-
-        .main-wrapper {
+        
+        .container {
+            width: 100%;
+            min-width: 100%;
+            background: #f8f6fd;
+            border-radius: 15px;
+            padding: 30px;
+            overflow: visible;
+            margin:0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .header-container {
             display: flex;
-            gap: 0;
-            width: 100vw;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #5a46a2;
+        }
+        
+        .page-title {
+            color: #2c3e50;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
             margin: 0;
+            border: none;
+            padding: 0;
         }
-
-        @media (max-width: 768px) {
-            .main-wrapper {
-                flex-direction: column;
-            }
-        }
-
-        .form-box {
-            flex: 1;
-            background: white;
-            box-shadow: 0 5px 20px rgba(90, 70, 162, 0.1);
-            overflow: hidden;
-            border: 1px solid #f0eaff;
-            margin: 0;
-            border-radius: 0;
-        }
-
-        .preview-box {
-            width: 380px;
-            flex-shrink: 0;
-            background: white;
-            box-shadow: 0 5px 20px rgba(90, 70, 162, 0.1);
-            overflow: hidden;
-            border: 1px solid #f0eaff;
-            margin: 0;
-            border-radius: 0;
-        }
-
-        @media (max-width: 768px) {
-            .preview-box {
-                width: 100%;
-                max-width: 100%;
-            }
-        }
-
-        .form-header, .preview-header {
-            background: linear-gradient(120deg, #f5f3ff, #faf5ff);
-            padding: 0.9rem 1.4rem;
-            font-size: 1.2rem;
+        
+        .btn-back {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+            padding: 10px 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
             font-weight: 600;
-            border-bottom: 1px solid #f0eaff;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn-back:hover {
+            background: linear-gradient(135deg, #7f8c8d, #6c7b7d);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(127, 140, 141, 0.3);
+        }
+        
+        h2 {
+            color: #5a46a2;
+            margin-bottom: 18px;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        h3 {
+            color: #5a46a2;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 18px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+        }
+        
+        .input-text {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s;
+            background: #f8f9fa;
+        }
+        
+        .input-text:focus {
+            outline: none;
+            border-color: #b64b62;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(182, 75, 98, 0.1);
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #f9cc22, #b64b62);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #f9cc22, #b64b62);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(252, 199, 224, 0.3);
+        }
+        
+        .alert {
+            padding: 12px 18px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+            font-size: 14px;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        /* Baris dengan 3 kolom */
+        .info-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 14px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
-
-        .form-header { color: var(--primary); }
-        .preview-header { color: var(--secondary); justify-content: center; }
-
-        .form-body {
-            padding: 1.5rem 1.4rem 1rem;
-        }
-
-        .row {
+        
+        .info-value {
+            background: #f8f9fa;
+            padding: 12px 16px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            color: #2c3e50;
+            font-size: 15px;
+            min-height: 48px;
             display: flex;
-            flex-direction: column;
-            gap: 1.1rem;
-        }
-
-        @media (min-width: 768px) {
-            .row {
-                flex-direction: row;
-                gap: 1.1rem;
-            }
-            .form-group {
-                flex: 1;
-            }
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 5px;
-            font-size: 0.95rem;
-            color: var(--primary);
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 11px 15px;
-            border: 2px solid #e8e6f2;
-            border-radius: 10px;
-            font-size: 0.93rem;
-            background: #faf9ff;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(90, 70, 162, 0.1);
-        }
-
-        .upload-area {
-            position: relative;
-            display: flex;
-            flex-direction: column;
             align-items: center;
+        }
+        
+        .help-text {
+            color: #6c757d;
+            display: block;
+            margin-top: 8px;
+            font-size: 13px;
+            line-height: 1.4;
+        }
+        
+        .form-actions {
+            margin-top: 30px;
+            display: flex;
             justify-content: center;
-            gap: 6px;
-            padding: 18px 16px;
-            border: 2px dashed var(--soft);
+        }
+        
+        .info-box {
+            background: #e7f1ff;
+            border: 1px solid #b8d4ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h4 {
+            color: #0d6efd;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-box ul {
+            padding-left: 20px;
+            color: #495057;
+        }
+        
+        .info-box li {
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        
+        .upload-group {
+            background: #f8f9fa;
+            border: 2px solid #e0e6ed;
             border-radius: 10px;
-            background: #faf9ff;
-            cursor: pointer;
-            transition: all 0.2s;
+            padding: 20px;
+            margin-bottom: 25px;
         }
-
-        .upload-area:hover {
-            border-color: var(--primary);
-            background: #f5f3ff;
+        
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            margin-top: 10px;
         }
-
-        .upload-area i {
-            font-size: 1.6rem;
-            color: var(--text-muted);
-        }
-
-        .upload-text {
-            font-size: 0.92rem;
-            font-weight: 600;
-            color: var(--primary);
-        }
-
-        .upload-hint {
-            font-size: 0.78rem;
-            color: var(--text-muted);
-        }
-
-        .upload-input {
+        
+        .file-input-wrapper input[type=file] {
             position: absolute;
-            top: 0;
             left: 0;
+            top: 0;
+            opacity: 0;
             width: 100%;
             height: 100%;
-            opacity: 0;
             cursor: pointer;
         }
-
-        .help {
-            display: block;
-            font-size: 0.78rem;
-            color: var(--text-muted);
-            margin-top: 3px;
-            font-style: italic;
-        }
-
-        .alert {
-            background: #fff8f8;
-            color: #c0392b;
-            padding: 10px 14px;
+        
+        .file-input-btn {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            padding: 10px 16px;
             border-radius: 8px;
-            margin-bottom: 1rem;
-            border-left: 3px solid var(--secondary);
-            font-size: 0.9rem;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-        }
-
-        .alert-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-            border-left: 3px solid #66bb6a;
-        }
-
-        .action-bar {
-            padding: 0.8rem 1.4rem 0.9rem;
-            background: #fbf9ff;
-            border-top: 1px solid #f3f0ff;
-            display: flex;
-            gap: 10px;
-            margin-top: 0;
-        }
-
-        @media (max-width: 768px) {
-            .action-bar {
-                flex-direction: column;
-            }
-        }
-
-        .btn {
+            font-size: 14px;
+            font-weight: 600;
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            gap: 6px;
-            padding: 9px 18px;
-            border-radius: 10px;
-            font-weight: 600;
-            font-size: 0.92rem;
+            gap: 8px;
             cursor: pointer;
-            text-decoration: none;
-            border: none;
-            transition: all 0.15s;
-            font-family: inherit;
-            min-height: 40px;
+            transition: all 0.3s;
+            width: 100%;
+            justify-content: center;
         }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--secondary), #9e3e52);
-            color: white;
-            flex: 1;
-            box-shadow: 0 2px 8px rgba(182, 75, 98, 0.2);
+        
+        .file-input-btn:hover {
+            background: linear-gradient(135deg, #495057, #343a40);
         }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 3px 10px rgba(182, 75, 98, 0.25);
-        }
-
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--soft), #c8a5d0);
-            color: var(--primary);
-            flex: 1;
-        }
-
-        .btn-secondary:hover {
-            background: linear-gradient(135deg, #d0a8d5, #c095cb);
-        }
-
-        .preview-body {
-            padding: 1.5rem 1.2rem;
+        
+        .current-file-info {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            color: #495057;
             text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 1.1rem;
-        }
-
-        .preview-logo-container {
-            width: 250px;
-            height: 250px;
-            border-radius: 50%;
-            background: white;
+            margin-top: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.06);
-            overflow: hidden;
+            gap: 8px;
         }
-
-        .preview-logo {
-            width: 250px;
-            height: 250px;
-            object-fit: contain;
+        
+        .timestamp {
+            color: #6c757d;
+            font-size: 13px;
         }
-
-        .preview-name {
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--primary);
+        
+        /* Form Input Row */
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
         }
-
-        .preview-tag {
-            font-size: 0.95rem;
-            color: var(--text-muted);
-            font-weight: 500;
-            max-width: 90%;
+        
+        .form-row .form-group {
+            margin-bottom: 0;
+        }
+        
+        @media (max-width: 992px) {
+            .info-row,
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .info-row,
+            .form-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .header-container {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .btn-back {
+                align-self: flex-start;
+            }
+            
+            body {
+                padding: 10px;
+            }
         }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="main-wrapper">
-        <div class="form-box">
-            <div class="form-header">
-                <i class="fas fa-sliders-h" style="color: var(--secondary);"></i>
-                Header & Logo
-            </div>
-
-            <div class="form-body">
-                <?php if ($success): ?>
-                    <div class="alert alert-success">
-                        <i class="fas fa-check-circle"></i>
-                        <?= htmlspecialchars($success) ?>
-                    </div>
-                <?php endif; ?>
-
-                <?php if ($error): ?>
-                    <div class="alert">
-                        <i class="fas fa-exclamation-circle"></i>
-                        <?= htmlspecialchars($error) ?>
-                    </div>
-                <?php endif; ?>
-
-                <form id="headerForm" method="POST" enctype="multipart/form-data">
-                    <input type="hidden" name="current_logo" value="<?= htmlspecialchars($data['logo_path']) ?>">
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label for="business_name">Nama Usaha</label>
-                            <input 
-                                type="text" 
-                                id="business_name" 
-                                name="business_name"
-                                value="<?= htmlspecialchars($data['business_name']) ?>"
-                                maxlength="100" 
-                                required
-                                placeholder="Contoh: Dapoer Funraise"
-                            >
-                        </div>
-
-                        <div class="form-group">
-                            <label for="tagline">Tagline</label>
-                            <input 
-                                type="text" 
-                                id="tagline" 
-                                name="tagline"
-                                value="<?= htmlspecialchars($data['tagline']) ?>"
-                                maxlength="150" 
-                                required
-                                placeholder="Contoh: Cemilan rumahan yang bikin nagih!"
-                            >
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Ganti Logo</label>
-                        <div class="upload-area" id="uploadArea">
-                            <i class="fas fa-cloud-upload-alt"></i>
-                            <div class="upload-text" id="uploadFileName">Klik atau seret file</div>
-                            <div class="upload-hint">JPG, PNG, WebP • ≤2 MB</div>
-                            <input 
-                                type="file" 
-                                id="logo_file" 
-                                name="logo_file" 
-                                class="upload-input"
-                                accept=".jpg,.jpeg,.png,.webp"
-                            >
-                        </div>
-                        <span class="help">Logo saat ini: <?= basename($data['logo_path']) ?></span>
-                    </div>
-                </form>
-            </div>
-
-            <div class="action-bar">
-                <a href="pengaturan.php" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left"></i> Kembali
-                </a>
-                <button type="submit" form="headerForm" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Simpan
-                </button>
-            </div>
+    <div class="container">
+        <div class="header-container">
+            <h1 class="page-title"><i class="fas fa-heading"></i> Pengaturan Header</h1>
+            <a href="pengaturan.php" class="btn-back">
+                <i class="fas fa-arrow-left"></i> Kembali
+            </a>
         </div>
-
-        <div class="preview-box">
-            <div class="preview-header">
-                <i class="fas fa-eye"></i> Peninjauan 
+        
+        <?php if ($success_msg): ?>
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i> <?= htmlspecialchars($success_msg) ?>
             </div>
-            <div class="preview-body">
-                <div class="preview-logo-container">
-                    <img 
-                        src="../<?= htmlspecialchars($data['logo_path']) ?>"
-                        alt="Preview Logo"
-                        class="preview-logo"
-                        id="previewLogo"
-                        onerror="this.src='../uploads/logo.png'; this.onerror=null;"
-                    >
+        <?php endif; ?>
+            
+        <?php if ($error_msg): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?>
+            </div>
+        <?php endif; ?>
+        
+        <!-- Edit Header Content -->
+        <div class="section">
+            <h2><i class="fas fa-edit"></i> Konten Header</h2>
+            
+            <div class="info-box">
+                <h4><i class="fas fa-info-circle"></i> Informasi Header</h4>
+                <ul>
+                    <li>Header adalah bagian atas website yang berisi logo dan informasi bisnis</li>
+                    <li>Logo akan ditampilkan di bagian atas semua halaman website</li>
+                    <li>Nama bisnis dan tagline akan muncul di dekat logo</li>
+                    <li>Format logo yang didukung: JPG, PNG, GIF, WebP (max 2MB)</li>
+                </ul>
+            </div>
+            
+            <form method="POST" enctype="multipart/form-data">
+                <!-- Upload Logo -->
+                <div class="upload-group">
+                    <label>
+                        <i class="fas fa-image"></i> Upload Logo:
+                    </label>
+                    <div class="file-input-wrapper">
+                        <div class="file-input-btn">
+                            <i class="fas fa-upload"></i> Pilih File Logo Baru
+                        </div>
+                        <input type="file" name="logo" id="logoInput" accept=".jpg,.jpeg,.png,.gif,.webp">
+                    </div>
+                    <div class="current-file-info">
+                        <i class="fas fa-info-circle"></i>
+                        Logo saat ini: <?= htmlspecialchars(basename($header['logo_path'])) ?>
+                    </div>
+                    <span class="help-text">
+                        Ukuran maksimal: 2MB | Format: JPG, PNG, GIF, WebP
+                    </span>
                 </div>
-                <div class="preview-name" id="previewName"><?= htmlspecialchars($data['business_name']) ?></div>
-                <div class="preview-tag" id="previewTag"><?= htmlspecialchars($data['tagline']) ?></div>
-            </div>
+                
+                <!-- Form Input Row - 3 kolom dalam 1 baris -->
+                <div class="form-row">
+                    <!-- Nama Bisnis -->
+                    <div class="form-group">
+                        <label for="business_name">
+                            <i class="fas fa-store"></i> Nama Bisnis Baru:
+                        </label>
+                        <input type="text" id="business_name" name="business_name" 
+                            value="<?= htmlspecialchars($header['business_name']) ?>" 
+                            maxlength="100" required class="input-text"
+                            placeholder="Contoh: Dapoer Funraise">
+                        <span class="help-text">
+                            Nama bisnis Anda
+                        </span>
+                    </div>
+                    
+                    <!-- Tagline -->
+                    <div class="form-group">
+                        <label for="tagline">
+                            <i class="fas fa-quote-left"></i> Tagline/Slogan Baru:
+                        </label>
+                        <input type="text" id="tagline" name="tagline" 
+                            value="<?= htmlspecialchars($header['tagline']) ?>" 
+                            maxlength="150" required class="input-text"
+                            placeholder="Contoh: Cemilan rumahan yang bikin nagih!">
+                        <span class="help-text">
+                            Slogan bisnis Anda
+                        </span>
+                    </div>
+                    
+                    <!-- Timestamp (Readonly) -->
+                    <div class="form-group">
+                        <label>
+                            <i class="fas fa-clock"></i> Akan Diperbarui Pada:
+                        </label>
+                        <div class="info-value">
+                            <span class="timestamp">
+                                <?= date('d M Y H:i:s') ?>
+                            </span>
+                        </div>
+                        <span class="help-text">
+                            Timestamp akan diupdate otomatis
+                        </span>
+                    </div>
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="form-actions">
+                    <button type="submit" name="update_header" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Simpan Perubahan Header
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
-
+    
     <script>
-        // Live preview untuk nama usaha
-        document.getElementById('business_name').addEventListener('input', e => {
-            document.getElementById('previewName').textContent = e.target.value || 'Nama Usaha';
-        });
-
-        // Live preview untuk tagline
-        document.getElementById('tagline').addEventListener('input', e => {
-            document.getElementById('previewTag').textContent = e.target.value || 'Tagline';
-        });
-
-        // Live preview untuk logo
-        document.getElementById('logo_file').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            const uploadFileName = document.getElementById('uploadFileName');
-            const previewLogo = document.getElementById('previewLogo');
-            
-            if (file) {
-                // Validasi ukuran file
-                if (file.size > 2 * 1024 * 1024) {
-                    alert('Ukuran file terlalu besar! Maksimal 2 MB.');
-                    this.value = '';
-                    uploadFileName.textContent = 'Klik atau seret file';
-                    return;
-                }
-
-                // Validasi tipe file
-                const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-                if (!allowedTypes.includes(file.type)) {
-                    alert('Format file tidak didukung! Gunakan JPG, PNG, atau WebP.');
-                    this.value = '';
-                    uploadFileName.textContent = 'Klik atau seret file';
-                    return;
-                }
-
-                // Update nama file
-                let name = file.name;
-                if (name.length > 20) name = name.substring(0, 17) + '...';
-                uploadFileName.textContent = name;
-
-                // Preview gambar
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    previewLogo.src = ev.target.result;
-                };
-                reader.readAsDataURL(file);
-            } else {
-                uploadFileName.textContent = 'Klik atau seret file';
-            }
-        });
-
-        // Drag and drop support
-        const uploadArea = document.getElementById('uploadArea');
+        // Auto close alerts after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
         
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.style.borderColor = 'var(--primary)';
-            uploadArea.style.background = '#f5f3ff';
-        });
-
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.style.borderColor = 'var(--soft)';
-            uploadArea.style.background = '#faf9ff';
-        });
-
-        uploadArea.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadArea.style.borderColor = 'var(--soft)';
-            uploadArea.style.background = '#faf9ff';
-            
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                document.getElementById('logo_file').files = files;
-                // Trigger change event
-                document.getElementById('logo_file').dispatchEvent(new Event('change'));
+        // File size validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('logoInput');
+            if (fileInput.files.length > 0) {
+                const fileSize = fileInput.files[0].size; // in bytes
+                const maxSize = 2097152; // 2MB in bytes
+                
+                if (fileSize > maxSize) {
+                    e.preventDefault();
+                    alert('Ukuran file terlalu besar! Maksimal 2MB.');
+                    return false;
+                }
             }
         });
+        
+        // Update current file info when file is selected
+        document.getElementById('logoInput').addEventListener('change', function(e) {
+            const fileInfo = document.querySelector('.current-file-info');
+            if (this.files.length > 0) {
+                fileInfo.innerHTML = `
+                    <i class="fas fa-info-circle"></i>
+                    File baru yang dipilih: ${this.files[0].name}
+                `;
+            }
+        });
+        
+        // Update timestamp to current time
+        function updateTimestamp() {
+            const now = new Date();
+            const options = { 
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            };
+            const formattedDate = now.toLocaleDateString('id-ID', options);
+            document.querySelector('.info-value .timestamp').textContent = formattedDate;
+        }
+        
+        // Update timestamp every minute
+        setInterval(updateTimestamp, 60000);
     </script>
 </body>
 </html>
