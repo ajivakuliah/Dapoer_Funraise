@@ -162,7 +162,7 @@ $contact_cards = $stmtCards->fetchAll(PDO::FETCH_ASSOC);
     <title><?= htmlspecialchars($header['business_name']) ?> - <?= htmlspecialchars($header['tagline']) ?></title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/index.css">
+    <link rel="stylesheet" href="../Dapoer_Funraise/css/index.css">
     <link rel="icon" type="image/x-icon" href="<?= htmlspecialchars($header['logo_path']) ?>">
 </head>
 <body>
@@ -409,6 +409,6 @@ $contact_cards = $stmtCards->fetchAll(PDO::FETCH_ASSOC);
         <p><?= $footerData['copyright_text'] ?> — <?= htmlspecialchars($footerData['main_text']) ?></p>
     </footer>
 
-    <script src="../js/index.js"></script>
+    <script src="../Dapoer_Funraise/js/index.js"></script>
 </body>
 </html>
