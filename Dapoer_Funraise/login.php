@@ -1,5 +1,6 @@
 <?php
 session_start();
+require 'config.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -14,7 +15,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Username atau password salah.';
     }
 }
+
+// Ambil data header
+$stmtHeader = $pdo->query("SELECT logo_path, business_name, tagline FROM header WHERE id = 1");
+$header = $stmtHeader->fetch(PDO::FETCH_ASSOC);
+if (!$header) {
+    $header = [
+        'logo_path' => 'assets/logo.png',
+        'business_name' => 'Dapoer Funraise',
+        'tagline' => 'Cemilan rumahan yang bikin nagih!'
+    ];
+}
 ?>
+
 
 <!DOCTYPE html>
 <html lang="id">
@@ -171,7 +184,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-weight: 700;
             color: white;
             box-shadow: 0 8px 20px rgba(90, 70, 162, 0.25);
+            overflow: hidden; /* Tambahkan ini agar gambar tidak keluar */
         }
+
+        /* Tambahkan CSS baru ini */
+        .brand-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 50%;
+        }        
         h2 {
             font-size: 2rem;
             margin-bottom: 1.5rem;
@@ -308,22 +330,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </style>
 </head>
 <body>
-    <header class="app-header">
-        <div class="logo">
-            <div class="logo-icon">
-                <img src="assets/logo.png" alt="Logo Dapoer Funraise" style="width: 100%; height: 100%; object-fit: contain;">
-            </div>
-            <div class="logo-text">
-                <span class="logo-main">Dapoer Funraise</span>
-                <span class="logo-sub">Cemilan rumahan yang bikin nagih!</span>
-            </div>
-        </div>
-    </header>
-
     <main>
         <div class="login-container" role="main" aria-labelledby="login-title">
             <div class="brand-logo" aria-hidden="true">
-                <img src="assets/logo.png" alt="Logo Dapoer Funraise" style="width: 100%; height: 100%; object-fit: contain;">
+                <img src="<?= htmlspecialchars($header['logo_path']) ?>" alt="Logo <?= htmlspecialchars($header['business_name']) ?>"  style="width: 100%; height: 100%; object-fit: contain;">
             </div>
             <h2 id="login-title">Masuk ke Dashboard</h2>
 
@@ -354,9 +364,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </main>
-
-    <footer>
-        <p>&copy; 2025 <strong>Dapoer Funraise</strong> — Mendukung Expo Campus MAN 2 Samarinda</p>
-    </footer>
 </body>
 </html>
