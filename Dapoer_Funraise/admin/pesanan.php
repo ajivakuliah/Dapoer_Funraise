@@ -2,7 +2,7 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-require_once 'config.php';
+require_once '../config.php';
 
 $error = $success = '';
 
@@ -185,10 +185,10 @@ function renderProduk($produkJson) {
             position: relative;
         }
 
-        .stat-card:hover {
+        /* .stat-card:hover {
             transform: translateY(-2px);
             box-shadow: var(--shadow-hover);
-        }
+        } */
 
         .stat-card.active {
             border-color: var(--primary);
@@ -312,7 +312,7 @@ function renderProduk($produkJson) {
         /* 🎯 3 CARD PER BARIS — GRID, TANPA SCROLL HORIZONTAL */
         .orders-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
             gap: 0.9rem;
             padding: 0.8rem 0;
             margin: 0;
@@ -551,6 +551,71 @@ function renderProduk($produkJson) {
             color: #777;
             font-size: 0.85rem;
         }
+
+/* Styling untuk STAT CARD (di file produk.css) */
+
+.stats {
+    display: flex;
+    justify-content: space-around;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    flex-grow: 1;
+    /* PENTING: Untuk penempatan ikon dan konten */
+    display: flex; 
+    align-items: center; /* Vertikal: Ikon dan konten sejajar di tengah */
+    justify-content: center; /* Horizontal: Biarkan ikon di kiri */
+    
+    padding: 15px 60px;
+    border-radius: 10px;
+    background-color: #f7f7f7;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-right: -1px;
+    color: var(--primary, #5A46A2);
+}
+
+.stat-content {
+    /* PENTING: Untuk menengahkan Nilai dan Label */
+    display: flex;
+    flex-direction: column; /* Nilai di atas Label */
+    align-items: center; /* Horizontal: Nilai dan Label berada di tengah */
+    flex-grow: 1;
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: bold;
+    line-height: 1.1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    margin-top: 5px;
+    color: #666;
+}
+
+/* Tambahkan styling aktif agar warna terlihat */
+.stat-card.active {
+    background-color: var(--primary, #5A46A2);
+    color: white;
+}
+.stat-card.active .stat-icon {
+    color: #ffffff;
+}
+.stat-card.active .stat-value {
+    color: #ffffff;
+}
+.stat-card.active .stat-label {
+    color: #eee;
+}
     </style>
 </head>
 <body>
@@ -558,22 +623,38 @@ function renderProduk($produkJson) {
 <div class="container">
     <div class="stats">
         <div class="stat-card <?= $status_filter === 'baru' ? 'active' : '' ?>" onclick="filterByStatus('baru')">
-            <div class="stat-value"><?= $count_baru ?></div>
-            <div class="stat-label">Baru</div>
+            <div class="stat-icon"><i class="fas fa-magic"></i></div>
+            <div class="stat-content">
+                <div class="stat-value"><?= $count_baru ?></div>
+                <div class="stat-label">Baru</div>
+            </div>
         </div>
+
         <div class="stat-card <?= $status_filter === 'diproses' ? 'active' : '' ?>" onclick="filterByStatus('diproses')">
-            <div class="stat-value"><?= $count_diproses ?></div>
-            <div class="stat-label">Diproses</div>
+            <div class="stat-icon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="stat-content">
+                <div class="stat-value"><?= $count_diproses ?></div>
+                <div class="stat-label">Diproses</div>
+            </div>
         </div>
+
         <div class="stat-card <?= $status_filter === 'selesai' ? 'active' : '' ?>" onclick="filterByStatus('selesai')">
-            <div class="stat-value"><?= $count_selesai ?></div>
-            <div class="stat-label">Selesai</div>
+            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+            <div class="stat-content">
+                <div class="stat-value"><?= $count_selesai ?></div>
+                <div class="stat-label">Selesai</div>
+            </div>
         </div>
+
         <div class="stat-card <?= $status_filter === 'batal' ? 'active' : '' ?>" onclick="filterByStatus('batal')">
-            <div class="stat-value"><?= $count_batal ?></div>
-            <div class="stat-label">Dibatalkan</div>
+            <div class="stat-icon"><i class="fas fa-times-circle"></i></div>
+            <div class="stat-content">
+                <div class="stat-value"><?= $count_batal ?></div>
+                <div class="stat-label">Dibatalkan</div>
+            </div>
         </div>
     </div>
+</div>
 
     <form method="GET" class="search-bar">
         <div class="search-group">
