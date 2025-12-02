@@ -249,7 +249,7 @@ $bulan_ini = namaBulan($bulan_pilihan);
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <title>Dashboard Admin • Dapoer Funraise</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <link rel="stylesheet" href="../css/IndexAdmin.css">
+    <link rel="stylesheet" href="../css/admin/IndexAdmin.css">
 </head>
 <body>
     <aside class="sidebar" id="sidebar">
@@ -525,6 +525,6 @@ $bulan_ini = namaBulan($bulan_pilihan);
         const pendapatanData = <?= json_encode($grafik_pendapatan) ?>;
         const produkData = <?= json_encode($produk_terlaris_grafik) ?>;
     </script>
-    <script src="js/IndexAdmin.js"></script>
+    <script src="../js/admin/IndexAdmin.js"></script>
 </body>
 </html>
