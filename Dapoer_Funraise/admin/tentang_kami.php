@@ -272,11 +272,12 @@ $inactive_count = count($carousel_photos) - $active_count;
         }
         
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            margin: 0;
+            width: 100%;
             background: #f8f6fd;
             border-radius: 15px;
             padding: 30px;
+            overflow: visible;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
         
@@ -805,7 +806,7 @@ $inactive_count = count($carousel_photos) - $active_count;
     <div class="container">
         <div class="header-container">
             <h1 class="page-title"><i class="fas fa-info-circle"></i> Edit Tentang Kami</h1>
-            <a href="../pengaturan.php" class="btn-back">
+            <a href="pengaturan.php" class="btn-back">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>
         </div>

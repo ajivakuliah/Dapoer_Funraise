@@ -168,12 +168,13 @@ $inactive_count = count($steps) - $active_count;
         }
         
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
+            margin: 0;
             background: #f8f6fd;
             border-radius: 15px;
             padding: 30px;
+            width: 100%;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            overflow: visible;
             
         }
         
@@ -368,7 +369,7 @@ $inactive_count = count($steps) - $active_count;
             overflow: hidden;
             transition: all 0.3s;
             background: white;
-            height: 180px; /* Compact height for 4 cards per row */
+            height: 210px; /* Compact height for 4 cards per row */
             display: flex;
             flex-direction: column;
         }
@@ -439,14 +440,13 @@ $inactive_count = count($steps) - $active_count;
             font-weight: 600;
             color: #2c3e50;
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 0px;
             line-height: 1.3;
             overflow: hidden;
             text-overflow: ellipsis;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
-            min-height: 32px;
         }
         
         /* Remove step number and description from card */

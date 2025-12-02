@@ -15,32 +15,40 @@ $searchTerm = trim($_GET['search'] ?? '');
 
 // Query produk
 try {
+    // Siapkan parameter untuk pencarian
+    $params = [];
+    $searchCondition = '';
+    
     if ($searchTerm !== '') {
-        $sql = "SELECT * FROM produk 
-                WHERE ID LIKE ? OR Nama LIKE ? OR Kategori LIKE ?
-                ORDER BY ID DESC 
-                LIMIT ?, ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute(["%$searchTerm%", "%$searchTerm%", "%$searchTerm%", $offset, $perPage]);
-    } else {
-        $sql = "SELECT * FROM produk ORDER BY ID DESC LIMIT ?, ?";
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([$offset, $perPage]);
+        $searchCondition = " WHERE ID LIKE ? OR Nama LIKE ? OR Kategori LIKE ?";
+        $params = ["%$searchTerm%", "%$searchTerm%", "%$searchTerm%"];
     }
+
+    // Query untuk mengambil data produk
+    $sql = "SELECT * FROM produk" . $searchCondition . " ORDER BY ID DESC LIMIT ?, ?";
+    $params[] = $offset;
+    $params[] = $perPage;
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $produk = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Hitung total
-    $countSql = $searchTerm !== '' 
-        ? "SELECT COUNT(*) FROM produk WHERE ID LIKE ? OR Nama LIKE ? OR Kategori LIKE ?"
-        : "SELECT COUNT(*) FROM produk";
+    // Hitung total data
+    $countSql = "SELECT COUNT(*) FROM produk" . $searchCondition;
     $countStmt = $pdo->prepare($countSql);
-    $countStmt->execute($searchTerm !== '' ? ["%$searchTerm%", "%$searchTerm%", "%$searchTerm%"] : []);
+    // Hapus offset dan perPage dari params untuk count query
+    $countParams = array_slice($params, 0, count($params) - 2); 
+    $countStmt->execute($countParams);
+    
     $totalData = (int)$countStmt->fetchColumn();
     $totalPage = ceil($totalData / $perPage);
 } catch (Exception $e) {
+    // Handle error database
+    error_log("Database Error: " . $e->getMessage());
     $produk = [];
     $totalData = 0;
     $totalPage = 0;
+    $error_msg = "Gagal memuat data produk.";
 }
 
 $msg = $_GET['msg'] ?? '';
@@ -54,536 +62,7 @@ $msg = $_GET['msg'] ?? '';
     <title>Daftar Produk • Dapoer Funraise</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #5A46A2;
-            --secondary: #B64B62;
-            --bg: #f0ecfa;
-            --card: #ffffff;
-            --text: #333333;
-            --border-light: #eae6ff;
-            --border-medium: #d8d2f0;
-            --border-card: #c9c1e8;
-            --shadow: 0 2px 6px rgba(90,70,162,0.04);
-            --shadow-hover: 0 4px 10px rgba(90,70,162,0.08);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            margin: 0 !important;
-            padding: 0 !important;
-            overflow-x: hidden;
-            font-family: 'Poppins', sans-serif;
-            background: #f1e8fdff;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            color: var(--text);
-        }
-
-        .page-wrapper {
-            width: 100vw;
-            max-width: 100%;
-            margin: 0;
-            padding: 0rem;
-        }
-
-        /* HEADER */
-        .header-section {
-            background: var(--card);
-            border-radius: 10px;
-            box-shadow: var(--shadow);
-            overflow: hidden;
-            margin-bottom: 1.2rem;
-        }
-
-        .header-content {
-            padding: 1rem 1.5rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .header-title h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            margin: 0;
-        }
-
-        .header-title p {
-            font-size: 0.95rem;
-            color: #666;
-            margin-top: 0.3rem;
-        }
-
-        /* SEARCH SECTION */
-        .search-section {
-            padding: 1rem 1.5rem;
-            background: #fbf9ff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .search-form {
-            display: flex;
-            align-items: center;
-            gap: 0.8rem;
-            flex: 1;
-            min-width: 320px;
-        }
-
-        .search-input {
-            flex: 1;
-            padding: 0.7rem 0.9rem;
-            border: 1px solid var(--border-medium);
-            border-radius: 6px;
-            font-size: 0.95rem;
-            font-family: inherit;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary);
-            box-shadow: 0 0 0 2px rgba(90,70,162,0.1);
-        }
-
-        .search-buttons {
-            display: flex;
-            gap: 0.6rem;
-            align-items: center;
-        }
-
-        /* BUTTONS */
-        .btn {
-            padding: 0.7rem 1rem;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            border: none;
-            text-decoration: none;
-            transition: all 0.2s;
-        }
-
-        .btn i {
-            font-size: 0.95rem;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #4a3a8a;
-            transform: translateY(-2px);
-            box-shadow: 0 3px 8px rgba(90,70,162,0.2);
-        }
-
-        .btn-search {
-            background: var(--secondary);
-            color: white;
-        }
-
-        .btn-search:hover {
-            background: #d05876;
-            transform: translateY(-2px);
-        }
-
-        .btn-reset {
-            background: #f0f0f0;
-            color: #555;
-        }
-
-        .btn-reset:hover {
-            background: #e0e0e0;
-            transform: translateY(-2px);
-        }
-
-        .btn-add {
-            background: #48bb78;
-            color: white;
-        }
-
-        .btn-add:hover {
-            background: #38a169;
-            transform: translateY(-2px);
-        }
-
-        /* ALERT */
-        .alert {
-            padding: 0.8rem 1.2rem;
-            border-radius: 6px;
-            margin-bottom: 1.2rem;
-            font-weight: 600;
-            background: #e8f5e9;
-            color: #2e7d32;
-            font-size: 0.95rem;
-            border-left: 4px solid #48bb78;
-        }
-
-        .alert i {
-            font-size: 1rem;
-            margin-right: 0.6rem;
-        }
-
-        /* TABLE */
-        .table-responsive {
-            overflow-x: auto;
-            margin-bottom: 1.8rem;
-            background: var(--card);
-            border-radius: 8px;
-            box-shadow: var(--shadow);
-        }
-
-        .table-admin {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1000px;
-        }
-
-        .table-admin th {
-            background: #fbf9ff;
-            padding: 1rem 1.2rem;
-            text-align: left;
-            font-weight: 600;
-            color: var(--primary);
-            font-size: 0.95rem;
-            border-bottom: 2px solid var(--border-light);
-            white-space: nowrap;
-        }
-
-        .table-admin td {
-            padding: 1rem 1.2rem;
-            font-size: 0.95rem;
-            vertical-align: middle;
-            border-bottom: 1px solid var(--border-light);
-        }
-
-        .table-admin tr:hover td {
-            background: #fcfbff;
-        }
-
-        /* FOTO THUMBNAIL */
-        .foto-thumbnail {
-            width: 80px;
-            height: 80px;
-            border-radius: 6px;
-            overflow: hidden;
-            border: 1px solid var(--border-medium);
-            background: #f8f9fa;
-        }
-
-        .foto-thumbnail img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-
-        .foto-placeholder {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #adb5bd;
-        }
-
-        .foto-placeholder i {
-            font-size: 1.8rem;
-        }
-
-        /* STATUS BADGE */
-        .badge {
-            padding: 0.4rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
-        }
-
-        .badge i {
-            font-size: 0.85rem;
-        }
-
-        .badge-success {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .badge-danger {
-            background: #ffe8e8;
-            color: var(--secondary);
-        }
-
-        .badge-warning {
-            background: #fff8e1;
-            color: #ef6c00;
-        }
-
-        /* ACTION BUTTONS */
-        .action-buttons {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .btn-action {
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-        }
-
-        .btn-edit {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-
-        .btn-edit:hover {
-            background: #bbdefb;
-            transform: translateY(-1px);
-        }
-
-        .btn-status {
-            background: #fff8e1;
-            color: #ef6c00;
-        }
-
-        .btn-status:hover {
-            background: #ffe8b2;
-            transform: translateY(-1px);
-        }
-
-        .btn-delete {
-            background: #ffe8e8;
-            color: var(--secondary);
-        }
-
-        .btn-delete:hover {
-            background: #ffc9c9;
-            transform: translateY(-1px);
-        }
-
-        /* PRODUCT INFO */
-        .product-name {
-            font-weight: 600;
-            color: var(--text);
-            margin-bottom: 0.4rem;
-            font-size: 1rem;
-        }
-
-        .product-details {
-            font-size: 0.9rem;
-            color: #666;
-            line-height: 1.5;
-        }
-
-        .detail-item {
-            margin-bottom: 0.3rem;
-        }
-
-        .detail-label {
-            color: #777;
-            font-weight: 500;
-        }
-
-        /* NO DATA */
-        .no-data {
-            text-align: center;
-            padding: 2.5rem;
-            color: #777;
-            font-size: 1rem;
-        }
-
-        .no-data i {
-            font-size: 2.5rem;
-            color: #ddd;
-            margin-bottom: 1rem;
-            display: block;
-        }
-
-        /* DATE STYLING */
-        .date-display {
-            font-size: 0.95rem;
-            color: var(--text);
-            font-weight: 500;
-        }
-
-        /* PRICE STYLING */
-        .price-display {
-            font-size: 1rem;
-            font-weight: 700;
-            color: var(--secondary);
-        }
-
-        /* PAGINATION */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-
-        .page-link {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 34px;
-            height: 34px;
-            background: var(--card);
-            color: var(--text);
-            text-decoration: none;
-            font-weight: 500;
-            font-size: 0.9rem;
-            border-radius: 6px;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-            padding: 0 0.6rem;
-        }
-
-        .page-link:hover:not(.disabled) {
-            background: var(--primary);
-            color: white;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 5px rgba(90,70,162,0.15);
-        }
-
-        .page-link.active {
-            background: var(--primary);
-            color: white;
-            font-weight: 600;
-        }
-
-        .page-link.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .page-link i {
-            font-size: 0.9rem;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 992px) {
-            .header-content {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-            
-            .search-section {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .search-form {
-                min-width: 100%;
-            }
-            
-            .search-buttons {
-                justify-content: flex-end;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .page-wrapper {
-                padding: 0.6rem;
-            }
-            
-            .table-responsive {
-                border-radius: 0;
-                margin: 0 -0.6rem 1.2rem;
-                width: calc(100% + 1.2rem);
-            }
-            
-            .table-admin th,
-            .table-admin td {
-                padding: 0.8rem 1rem;
-                font-size: 0.9rem;
-            }
-            
-            .foto-thumbnail {
-                width: 70px;
-                height: 70px;
-            }
-            
-            .action-buttons {
-                flex-wrap: wrap;
-                gap: 0.4rem;
-            }
-            
-            .btn-action {
-                width: 32px;
-                height: 32px;
-                font-size: 0.9rem;
-            }
-            
-            .badge {
-                font-size: 0.8rem;
-                padding: 0.3rem 0.7rem;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .page-wrapper {
-                padding: 0.5rem;
-            }
-            
-            .header-content,
-            .search-section {
-                padding: 0.8rem 1rem;
-            }
-            
-            .btn {
-                padding: 0.6rem 0.9rem;
-                font-size: 0.85rem;
-            }
-            
-            .search-input {
-                font-size: 0.9rem;
-                padding: 0.6rem 0.8rem;
-            }
-            
-            .foto-thumbnail {
-                width: 60px;
-                height: 60px;
-            }
-            
-            .pagination {
-                gap: 0.4rem;
-            }
-            
-            .page-link {
-                min-width: 30px;
-                height: 30px;
-                font-size: 0.85rem;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../css/admin/daftar_produk.css">
 </head>
 <body>
     <div class="page-wrapper">
@@ -613,6 +92,12 @@ $msg = $_GET['msg'] ?? '';
                 <i class="fas fa-check-circle"></i> <?= htmlspecialchars($msg) ?>
             </div>
         <?php endif; ?>
+        
+        <?php if (isset($error_msg)): ?>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-circle"></i> <?= htmlspecialchars($error_msg) ?>
+            </div>
+        <?php endif; ?>
 
         <div class="table-responsive">
             <table class="table-admin">
@@ -636,9 +121,12 @@ $msg = $_GET['msg'] ?? '';
                             </td>
                             <td>
                                 <div class="foto-thumbnail">
-                                    <?php if (!empty($p['Foto_Produk'])): ?>
-                                        <img src="../uploads/<?= htmlspecialchars($p['Foto_Produk']) ?>" 
-                                             alt="Foto Produk <?= htmlspecialchars($p['Nama']) ?>"
+                                    <?php 
+                                    $fotoPath = !empty($p['Foto_Produk']) ? "../uploads/" . htmlspecialchars($p['Foto_Produk']) : null;
+                                    ?>
+                                    <?php if ($fotoPath && file_exists($fotoPath)): ?>
+                                        <img src="<?= $fotoPath ?>" 
+                                             alt="Foto Produk <?= htmlspecialchars($p['Nama'] ?? 'Produk') ?>"
                                              onerror="this.parentElement.innerHTML='<div class=\'foto-placeholder\'><i class=\'fas fa-image\'></i></div>'">
                                     <?php else: ?>
                                         <div class="foto-placeholder">
@@ -728,7 +216,7 @@ $msg = $_GET['msg'] ?? '';
                                 <p>Tidak ada produk ditemukan.</p>
                                 <?php if ($searchTerm): ?>
                                     <p style="margin-top: 0.6rem; font-size: 0.9rem;">
-                                        Coba kata kunci lain atau <a href="?page=1" style="color: var(--primary); font-weight: 600;">reset pencarian</a>.
+                                        Coba kata kunci lain atau <a href="?page=1" onclick="resetSearch(); return false;" style="color: var(--primary); font-weight: 600;">reset pencarian</a>.
                                     </p>
                                 <?php endif; ?>
                             </td>
@@ -762,10 +250,6 @@ $msg = $_GET['msg'] ?? '';
         <?php endif; ?>
     </div>
 
-    <script>
-    function resetSearch() {
-        window.location.href = '?page=1';
-    }
-    </script>
+    <script src="../js/admin/daftar_produk.js"></script>
 </body>
 </html>
