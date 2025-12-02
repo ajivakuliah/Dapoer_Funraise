@@ -75,7 +75,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 exit;
             } else {
                 // Upload folder
-                $upload_dir = '../uploads/carousel/';
+                $upload_dir = 'uploads/carousel/';
                 if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
                 }
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $stmt->execute([$photo_id]);
                     $old_photo = $stmt->fetch(PDO::FETCH_ASSOC);
                     
-                    if ($old_photo && !empty($old_photo['image_path']) && strpos($old_photo['image_path'], 'uploads/') !== false) {
+                    if ($old_photo && !empty($old_photo['image_path']) && strpos($old_photo['image_path'], 'uploads/carousel/') !== false) {
                         $old_file = '../' . $old_photo['image_path'];
                         if (file_exists($old_file)) {
                             unlink($old_file);
@@ -163,7 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['error'] = 'Maksimal 2MB';
             } else {
                 // Upload folder
-                $upload_dir = '../uploads/carousel/';
+                $upload_dir = 'uploads/carousel/';
                 if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
                 }
@@ -174,7 +174,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $destination = $upload_dir . $filename;
                 
                 if (move_uploaded_file($file['tmp_name'], $destination)) {
-                    $image_path = 'uploads/carousel/' . $filename;
+                    $image_path = 'admin/uploads/carousel/' . $filename;
                     
                     // Get max sort_order and add 1
                     $stmt = $pdo->query("SELECT MAX(sort_order) as max_order FROM carousel_photos");
@@ -220,7 +220,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if ($photo && !empty($photo['image_path'])) {
             $file_path = '../' . $photo['image_path'];
-            if (file_exists($file_path) && strpos($photo['image_path'], 'uploads/') !== false) {
+            if (file_exists($file_path) && strpos($photo['image_path'], '/uploads/carousel/') !== false) {
                 unlink($file_path);
             }
         }
