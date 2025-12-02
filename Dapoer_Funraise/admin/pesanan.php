@@ -444,9 +444,6 @@ function renderProduk($produkJson) {
                 <span class="disabled"><i class="fas fa-chevron-right"></i></span>
             <?php endif; ?>
         </div>
-        <div class="pagination-info">
-            Halaman <?= $page ?> dari <?= $total_pages ?> • Total: <?= $total_orders ?> pesanan
-        </div>
     <?php endif; ?>
 </div>
      <script src="../js/admin/pesanan.js"></script>
