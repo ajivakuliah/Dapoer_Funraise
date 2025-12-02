@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['error'] = 'Maksimal 2MB';
             } else {
                 // Upload folder
-                $upload_dir = 'admin/uploads/hero/';
+                $upload_dir = 'uploads/hero/';
                 if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
                 }
@@ -118,7 +118,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $_SESSION['error'] = 'Maksimal 2MB';
             } else {
                 // Upload folder
-                $upload_dir = '../uploads/hero/';
+                $upload_dir = 'uploads/hero/';
                 if (!file_exists($upload_dir)) {
                     mkdir($upload_dir, 0777, true);
                 }
@@ -129,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $destination = $upload_dir . $filename;
                 
                 if (move_uploaded_file($file['tmp_name'], $destination)) {
-                    $bg_path = 'uploads/hero/' . $filename;
+                    $bg_path = 'admin/uploads/hero/' . $filename;
                     
                     // Get max sort_order and add 1
                     $stmt = $pdo->query("SELECT MAX(sort_order) as max_order FROM hero_backgrounds");
@@ -173,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         if ($bg && !empty($bg['background_path'])) {
             $file_path = '../' . $bg['background_path'];
-            if (file_exists($file_path) && strpos($bg['background_path'], 'uploads/') !== false) {
+            if (file_exists($file_path) && strpos($bg['background_path'], 'uploads/hero/') !== false) {
                 unlink($file_path);
             }
         }
