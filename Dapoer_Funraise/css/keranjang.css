@@ -23,7 +23,6 @@
         color: #333;
     }
 
-    /* 🔹 Wrapper utama: full viewport */
     .app-container {
         display: flex;
         flex-direction: column;
@@ -31,7 +30,6 @@
         overflow: hidden;
     }
 
-    /* 🔹 Header */
     .app-header {
         background: linear-gradient(90deg, var(--primary), var(--secondary));
         color: white;
@@ -218,7 +216,6 @@
         flex-shrink: 0;
     }
 
-    /* 🔹 Keranjang */
     .cart-items {
         padding: 0.8rem 0.8rem 0.6rem;
         overflow-y: auto;
@@ -330,7 +327,6 @@
         transform: scale(1.05);
     }
 
-    /* 🔹 Form */
     .checkout-form {
         padding: 0.8rem;
         display: flex;
@@ -367,7 +363,6 @@
         background: white;
     }
 
-    /* 🔹 Input nama dan alamat sama tinggi */
     .nama-input, .alamat-input {
         min-height: 120px;
         height: 120px;
@@ -381,7 +376,6 @@
         line-height: 1.4;
     }
 
-    /* 🔹 CAPTCHA Styles */
     .captcha-container {
         display: flex;
         align-items: center;
@@ -413,7 +407,6 @@
         transform: scale(1.02);
     }
 
-    /* 🔹 TOMBOL REFRESH BARU */
     .captcha-refresh-btn {
         width: 50px;
         height: 50px;
@@ -488,7 +481,6 @@
         color: var(--secondary);
     }
 
-    /* 🔹 HANYA SUBTOTAL — tidak ada total */
     .cart-summary {
         background: linear-gradient(135deg, #fbf9ff, #f7f3ff);
         border-radius: 12px;
@@ -506,7 +498,6 @@
     .summary-label { color: var(--text-muted); }
     .summary-value { color: var(--secondary); font-weight: 700; }
 
-    /* 🔹 Tombol */
     .form-footer {
         margin-top: 1rem;
         padding-top: 0.8rem;
@@ -550,7 +541,6 @@
         box-shadow: 0 4px 12px rgba(182, 75, 98, 0.35);
     }
 
-    /* 🔹 Form row */
     .form-row {
         display: flex;
         gap: 0.8rem;
@@ -562,7 +552,6 @@
         min-width: 220px;
     }
 
-    /* 🔹 Update buttons container */
     .update-buttons {
         display: flex;
         gap: 8px;
@@ -572,7 +561,6 @@
         flex: 1;
     }
 
-    /* 🔹 Responsif */
     @media (max-width: 899px) {
         .two-columns {
             flex-direction: column;

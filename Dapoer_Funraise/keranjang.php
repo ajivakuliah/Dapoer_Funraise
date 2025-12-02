@@ -6,7 +6,6 @@ if (!isset($_SESSION['cart'])) {
     $_SESSION['cart'] = [];
 }
 
-// Ambil data header
 $stmtHeader = $pdo->query("SELECT logo_path, business_name, tagline FROM header WHERE id = 1");
 $header = $stmtHeader->fetch(PDO::FETCH_ASSOC);
 if (!$header) {
@@ -17,7 +16,6 @@ if (!$header) {
     ];
 }
 
-// Ambil nomor WhatsApp dari database - ambil yang aktif dan urutkan
 $whatsapp_number = '';
 try {
     $stmt = $pdo->query("SELECT whatsapp_number FROM whatsapp_buttons WHERE is_active = 1 ORDER BY sort_order ASC, id ASC LIMIT 1");
@@ -25,14 +23,13 @@ try {
     if ($result && !empty($result['whatsapp_number'])) {
         $whatsapp_number = $result['whatsapp_number'];
     } else {
-        $whatsapp_number = '6283129704643'; // fallback default
+        $whatsapp_number = '6283129704643'; 
     }
 } catch (Exception $e) {
     error_log("WhatsApp number error: " . $e->getMessage());
-    $whatsapp_number = '6283129704643'; // fallback default
+    $whatsapp_number = '6283129704643'; 
 }
 
-// Hapus item
 if (isset($_GET['remove'])) {
     $key = $_GET['remove'];
     if (isset($_SESSION['cart'][$key])) {
@@ -42,7 +39,6 @@ if (isset($_GET['remove'])) {
     }
 }
 
-// Update kuantitas
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['quantity']) && is_array($_POST['quantity'])) {
         foreach ($_POST['quantity'] as $key => $qty) {
@@ -59,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Proses checkout — SIMPAN KE DATABASE + Kirim ke WhatsApp
     if (isset($_POST['generate_wa'])) {
         $errors = [];
         $nama = trim($_POST['nama'] ?? '');
@@ -72,8 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$alamat) $errors[] = 'Alamat wajib diisi.';
         if (!in_array($pengambilan, ['ambil', 'antar'])) $errors[] = 'Pilih metode pengambilan.';
         if (!in_array($metode_bayar, ['cash', 'tf'])) $errors[] = 'Pilih metode pembayaran.';
-        
-        // 🔹 Validasi CAPTCHA - case sensitive
+  
         if (empty($captcha_input)) {
             $errors[] = 'Kode CAPTCHA wajib diisi.';
         } elseif (!isset($_SESSION['captcha_code']) || $captcha_input !== $_SESSION['captcha_code']) {
@@ -86,14 +80,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $cart = $_SESSION['cart'] ?? [];
         if (empty($cart)) $errors[] = 'Keranjang belanja kosong.';
 
-        // 🔹 Hanya lanjutkan jika CAPTCHA valid dan tidak ada error lain
         if (empty($errors) && $captcha_verified) {
             try {
                 $total = 0;
                 $produk_list = [];
                 foreach ($cart as $item) {
                     $qty = (int)($item['quantity'] ?? 0);
-                    if ($qty <= 0) continue; // ✅ Hanya simpan yang dipilih
+                    if ($qty <= 0) continue; 
                     $harga = (int)($item['harga'] ?? 0);
                     $subtotal = $harga * $qty;
                     $total += $subtotal;
@@ -110,10 +103,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     throw new Exception("Tidak ada produk dengan jumlah > 0.");
                 }
 
-                // 🔹 SIMPAN KE DATABASE (tabel `pesanan`)
                 $produk_json = json_encode($produk_list, JSON_UNESCAPED_UNICODE);
-                
-                // Sesuaikan nilai metode_bayar dengan ENUM di database
+           
                 $metode_bayar_db = ($metode_bayar === 'cash') ? 'Tunai' : 'transfer';
                 
                 $stmt = $pdo->prepare("
@@ -121,7 +112,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     VALUES (?, ?, ?, ?, ?, ?, 'baru')
                 ");
                 
-                // Eksekusi dan cek hasil
                 $result = $stmt->execute([
                     $nama,
                     $alamat,
@@ -139,7 +129,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $order_id = $pdo->lastInsertId();
                 error_log("Pesanan berhasil dibuat dengan ID: " . $order_id);
 
-                // 🔹 Format WhatsApp
                 $wa_text = "Halo Dapoer Funraise!\n\n";
                 $wa_text .= "Saya ingin memesan:\n";
                 foreach ($produk_list as $p) {
@@ -162,13 +151,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $wa_encoded = rawurlencode($wa_text);
                 $whatsapp_link = "https://wa.me/" . $whatsapp_number . "?text=" . $wa_encoded;
 
-                // Update whatsapp_link di database
                 $update_stmt = $pdo->prepare("UPDATE pesanan SET whatsapp_link = ? WHERE id = ?");
                 $update_stmt->execute([$whatsapp_link, $order_id]);
 
-                // Reset session
                 unset($_SESSION['captcha_code']);
-                $_SESSION['cart'] = []; // Reset keranjang
+                $_SESSION['cart'] = []; 
                 header("Location: " . $whatsapp_link);
                 exit;
 
@@ -186,11 +173,9 @@ foreach ($cart as $item) {
     $total += $item['harga'] * $item['quantity'];
 }
 
-// 🔹 CAPTCHA - Inisialisasi (HANYA set variabel jika ada POST request)
 $captcha_error = '';
 $captcha_verified = false;
 
-// 🔹 HILANGKAN pesan error di awal - hanya set $errors ketika ada POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     $errors = [];
 }
@@ -253,7 +238,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
             <?php else: ?>
 
                 <div class="two-columns">
-                    <!-- 🔸 KIRI: PRODUK -->
                     <div class="column">
                         <div class="section">
                             <div class="section-header">
@@ -323,7 +307,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                         </div>
                     </div>
 
-                    <!-- 🔸 KANAN: DETAIL -->
                     <div class="column">
                         <div class="section">
                             <div class="section-header">
@@ -331,8 +314,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                             </div>
                             <div class="checkout-form">
                                 <form method="POST" id="checkoutForm">
-
-                                    <!-- 🔹 Baris 1: Nama & Alamat -->
                                     <div class="form-row">
                                         <div>
                                             <label class="form-label" for="nama">
@@ -360,7 +341,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                                         </div>
                                     </div>
 
-                                    <!-- 🔹 Baris 2: Pengiriman & Pembayaran -->
                                     <div class="form-row">
                                         <div>
                                             <label class="form-label">
@@ -403,7 +383,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                                         </div>
                                     </div>
 
-                                    <!-- 🔹 Summary -->
                                     <div class="cart-summary">
                                         <div class="summary-row">
                                             <span class="summary-label">Subtotal</span>
@@ -411,7 +390,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                                         </div>
                                     </div>
 
-                                    <!-- 🔹 Baris 3: CAPTCHA - DIPINDAHKAN KE BAWAH SUBTOTAL DENGAN JARAK -->
                                     <div class="form-row">
                                         <div>
                                             <label class="form-label" for="captcha">
@@ -430,7 +408,6 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
                                                     value="<?= htmlspecialchars($_POST['captcha'] ?? '') ?>"
                                                 >
                                                 <img src="captcha.php" id="captchaImage" class="captcha-image" alt="CAPTCHA" onclick="refreshCaptcha()">
-                                                <!-- 🔹 TOMBOL REFRESH BARU -->
                                                 <button type="button" class="captcha-refresh-btn" onclick="refreshCaptcha()" title="Refresh CAPTCHA">
                                                     <i class="fas fa-redo"></i>
                                                 </button>

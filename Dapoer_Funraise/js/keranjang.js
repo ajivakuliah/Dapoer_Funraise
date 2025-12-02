@@ -15,14 +15,11 @@
     function refreshCaptcha() {
         const captchaImage = document.getElementById('captchaImage');
         if (captchaImage) {
-            // Tambahkan timestamp untuk menghindari cache
             captchaImage.src = 'captcha.php?' + new Date().getTime();
         }
     }
 
-    // 🔹 FUNGSI KONFIRMASI PESANAN
     function confirmCheckout() {
-        // Validasi form terlebih dahulu
         const form = document.getElementById('checkoutForm');
         const nama = document.getElementById('nama').value.trim();
         const alamat = document.getElementById('alamat').value.trim();
@@ -43,7 +40,6 @@
             return false;
         }
         
-        // Tampilkan konfirmasi
         const confirmation = confirm('Apakah Anda yakin untuk membuat pesanan?\n\nPesanan akan dikirim ke WhatsApp dan tidak dapat dibatalkan.');
         return confirmation;
     }
@@ -53,7 +49,6 @@
         let lastScrollY = window.scrollY;
         let ticking = false;
 
-        // Auto-focus ke input CAPTCHA ketika gambar diklik
         const captchaImage = document.getElementById('captchaImage');
         const captchaInput = document.getElementById('captcha');
         
@@ -66,10 +61,8 @@
 
         const updateHeader = () => {
             if (window.scrollY > lastScrollY && window.scrollY > 80) {
-                // Scroll turun → sembunyikan
                 header.classList.add('hide');
             } else {
-                // Scroll naik / di atas → tampilkan
                 header.classList.remove('hide');
             }
             lastScrollY = window.scrollY;
