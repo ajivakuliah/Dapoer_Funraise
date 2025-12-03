@@ -17,33 +17,35 @@ if (isset($_SESSION['cart']) && is_array($_SESSION['cart'])) {
     $cart_count = count($_SESSION['cart']); // by produk/entri
 }
 
+// 🔹 Ambil data produk terlaris dari tabel transaksi_detail
+$terlaris_ids = [];
+try {
+    // Query untuk mendapatkan 2 produk terlaris berdasarkan jumlah pembelian
+    $sql_terlaris = "
+        SELECT produk_id, SUM(quantity) as total_terjual 
+        FROM transaksi_detail 
+        GROUP BY produk_id 
+        ORDER BY total_terjual DESC 
+        LIMIT 2
+    ";
+    $stmt_terlaris = $pdo->query($sql_terlaris);
+    $terlaris_data = $stmt_terlaris->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Ekstrak hanya ID produk terlaris
+    foreach ($terlaris_data as $item) {
+        $terlaris_ids[] = (int)$item['produk_id'];
+    }
+} catch (Exception $e) {
+    error_log("Database Error (terlaris): " . $e->getMessage());
+    $terlaris_ids = [];
+}
+
 $kategori_list = [];
 try {
     $stmt = $pdo->query("SELECT DISTINCT kategori FROM produk WHERE kategori IS NOT NULL AND kategori != '' ORDER BY kategori ASC");
     $kategori_list = $stmt->fetchAll(PDO::FETCH_COLUMN);
 } catch (Exception $e) {
     error_log("Database Error (kategori): " . $e->getMessage());
-}
-
-// 🔹 Ambil 3 produk terlaris berdasarkan pesanan selesai
-$produk_terlaris = [];
-try {
-    $stmt = $pdo->query("
-        SELECT p.id, p.Nama AS nama, p.Harga AS harga, p.Varian AS varian,
-               p.Deskripsi_Produk AS deskripsi, p.Foto_Produk AS foto, p.kategori, p.Status,
-               SUM(oi.quantity) as total_terjual
-        FROM produk p
-        LEFT JOIN order_items oi ON p.id = oi.product_id
-        LEFT JOIN orders o ON oi.order_id = o.id
-        WHERE o.status = 'selesai'
-        AND p.Status = 'aktif'
-        GROUP BY p.id
-        ORDER BY total_terjual DESC
-        LIMIT 3
-    ");
-    $produk_terlaris = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (Exception $e) {
-    error_log("Database Error (produk terlaris): " . $e->getMessage());
 }
 
 // 🔹 Ambil semua produk dengan filter pencarian dan kategori
@@ -147,9 +149,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_to_cart'])) {
         }
     }
 }
-
-// Dapatkan ID produk terlaris untuk badge
-$terlaris_ids = array_column($produk_terlaris, 'id');
 ?>
 
 <!DOCTYPE html>
@@ -162,6 +161,82 @@ $terlaris_ids = array_column($produk_terlaris, 'id');
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="css/produk.css"> 
+    <style>
+        /* Styling tambahan untuk badge terlaris */
+        .product-badge-container {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .badge-terlaris {
+            background: linear-gradient(135deg, #FF9800, #FF5722);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 3px 8px rgba(255, 87, 34, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            animation: pulse 2s infinite;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-terlaris i {
+            font-size: 0.7rem;
+        }
+        
+        .badge-rekomendasi {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 800;
+            padding: 5px 10px;
+            border-radius: 20px;
+            box-shadow: 0 3px 8px rgba(46, 125, 50, 0.3);
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 3px 8px rgba(255, 87, 34, 0.3);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 5px 15px rgba(255, 87, 34, 0.4);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 3px 8px rgba(255, 87, 34, 0.3);
+            }
+        }
+        
+        /* Untuk produk terlaris pertama (peringkat 1) */
+        .badge-terlaris.no1 {
+            background: linear-gradient(135deg, #FFC107, #FF9800);
+        }
+        
+        /* Untuk produk terlaris kedua (peringkat 2) */
+        .badge-terlaris.no2 {
+            background: linear-gradient(135deg, #9E9E9E, #757575);
+        }
+    </style>
 </head>
 <body>
     <div class="container-fluid">
@@ -263,17 +338,32 @@ $terlaris_ids = array_column($produk_terlaris, 'id');
                 </div>
             <?php else: ?>
                 <div class="products-grid">
-                    <?php foreach ($produk_list as $p):
+                    <?php 
+                    $counter = 0;
+                    foreach ($produk_list as $p):
+                        $is_terlaris = in_array((int)$p['id'], $terlaris_ids);
+                        $terlaris_position = $is_terlaris ? array_search((int)$p['id'], $terlaris_ids) + 1 : 0;
+                        
                         $varian_list = !empty($p['varian'])
                             ? array_filter(array_map('trim', explode(',', $p['varian'])))
                             : [];
                         $deskripsi = $p['deskripsi'] ?? 'Deskripsi tidak tersedia';
-                        $is_terlaris = in_array($p['id'], $terlaris_ids);
                     ?>
                         <div class="product-card">
-                            <?php if ($is_terlaris): ?>
-                                <div class="bestseller-badge">Terlaris</div>
-                            <?php endif; ?>
+                            <div class="product-badge-container">
+                                <?php if ($is_terlaris): ?>
+                                    <div class="badge-terlaris no<?= $terlaris_position ?>">
+                                        <i class="fas fa-fire"></i>
+                                        <?= $terlaris_position == 1 ? 'TERLARIS #1' : 'TERLARIS #2' ?>
+                                    </div>
+                                <?php endif; ?>
+                                <?php if ($counter < 2 && !$is_terlaris): ?>
+                                    <div class="badge-rekomendasi">
+                                        <i class="fas fa-star"></i>
+                                        REKOMENDASI
+                                    </div>
+                                <?php endif; ?>
+                            </div>
                             
                             <div class="product-img">
                                 <?php if (!empty($p['foto']) && file_exists('uploads/' . $p['foto'])): ?>
@@ -285,7 +375,14 @@ $terlaris_ids = array_column($produk_terlaris, 'id');
                                 <?php endif; ?>
                             </div>
                             <div class="product-body">
-                                <h2 class="product-name"><?= htmlspecialchars($p['nama']) ?></h2>
+                                <h2 class="product-name">
+                                    <?= htmlspecialchars($p['nama']) ?>
+                                    <?php if ($is_terlaris): ?>
+                                        <span style="color: #FF9800; font-size: 0.9em; margin-left: 5px;">
+                                            <i class="fas fa-crown"></i>
+                                        </span>
+                                    <?php endif; ?>
+                                </h2>
                                 <div class="product-price">Rp <?= number_format($p['harga'], 0, ',', '.') ?></div>
                                 
                                 <div class="desc-wrapper">
@@ -352,7 +449,9 @@ $terlaris_ids = array_column($produk_terlaris, 'id');
                                 </form>
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php 
+                    $counter++;
+                    endforeach; ?>
                 </div>
             <?php endif; ?>
         </main>
