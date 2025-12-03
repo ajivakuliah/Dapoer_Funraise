@@ -10,6 +10,25 @@ body {
     overflow-x: hidden;
 }
 
+.logo-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    backdrop-filter: blur(4px);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.logo-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
 .sidebar {
     position: fixed;
     left: 0;
@@ -96,7 +115,7 @@ body {
     left: 260px;
     right: 0;
     height: 70px;
-    background: white; /* UBAH WARNA BACKGROUND TOPBAR AGAR LOGO LEBIH JELAS */
+    background: linear-gradient(180deg, #2a1f3d 100%, #5A46A2 0%);
     border-bottom: 1px solid #eae6ff;
     display: flex;
     align-items: center;

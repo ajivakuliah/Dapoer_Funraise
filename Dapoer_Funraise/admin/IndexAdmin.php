@@ -11,6 +11,16 @@ $error = '';
 if (!isset($pdo) || !$pdo instanceof PDO) {
     die('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><div style="padding:2rem;max-width:600px;margin:2rem auto;background:#fee;border-radius:8px;color:#c00;font-family:sans-serif;"><h2>❌ Koneksi Database Gagal</h2><p>File <code>config.php</code> tidak menyediakan variabel <code>$pdo</code> yang valid.</p></div></body></html>');
 }
+// Ambil data header
+$stmtHeader = $pdo->query("SELECT logo_path, business_name, tagline FROM header WHERE id = 1");
+$header = $stmtHeader->fetch(PDO::FETCH_ASSOC);
+if (!$header) {
+    $header = [
+        'logo_path' => 'assets/logo.png',
+        'business_name' => 'Dapoer Funraise',
+        'tagline' => 'Cemilan rumahan yang bikin nagih!'
+    ];
+}
 
 // 🔹 AMBIL PARAMETER BULAN & TAHUN DARI GET
 $bulan_pilihan = isset($_GET['bulan']) ? (int)$_GET['bulan'] : (int)date('n');
@@ -255,8 +265,7 @@ $bulan_ini = namaBulan($bulan_pilihan);
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
             <h2>
-                <i class="fas fa-utensils"></i>
-                Dapoer Funraise
+                <span class="logo-main"><?= htmlspecialchars($header['business_name']) ?></span>
             </h2>
         </div>
         <ul class="sidebar-menu">

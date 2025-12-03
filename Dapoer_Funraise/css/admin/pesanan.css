@@ -19,7 +19,7 @@
 
 body {
     font-family: 'Poppins', sans-serif;
-    background:#f1e8fdff;
+    background:#f8f6fd;
     color: var(--text);
     padding: 0rem;
     line-height: 1.4;
@@ -92,36 +92,36 @@ body {
 
 .search-bar {
     background: var(--card);
-    padding: 0.8rem;
+    padding: 0.9rem;
     border-radius: 12px;
     box-shadow: var(--shadow);
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
     display: flex;
     flex-wrap: wrap; 
-    gap: 0.6rem;
+    gap: 0.7rem;
     align-items: flex-end;
     border: 1px solid var(--border-card);
 }
 
 .search-group {
-    min-width: 200px; 
+    min-width: 170px;
 }
 
 .search-group label {
     display: block;
-    font-size: 0.78rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.35rem;
     color: var(--primary);
 }
 
 .search-group input,
 .search-group select { 
     width: 100%;
-    padding: 0.5rem 0.8rem;
+    padding: 0.45rem 0.8rem;
     border: 1px solid var(--border-medium);
     border-radius: 8px;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     font-family: inherit;
     transition: all 0.25s ease;
     background: white;
@@ -138,14 +138,18 @@ body {
 
 .btn-search,
 .btn-reset {
-    padding: 0.5rem 1rem;
+    padding: 0.4rem 0.85rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 7px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex: 1;
+    height: 34px;
+    min-width: 70px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .btn-search {
@@ -159,20 +163,20 @@ body {
 }
 
 .btn-reset {
-    background: #f0f0f0;
-    color: #555;
+    background: #e2e8f0;
+    color: #475569;
 }
 
 .btn-reset:hover {
-    background: #e0e0e0;
+    background: #cbd5e1;
 }
 
 .alert {
-    padding: 0.6rem 1rem;
+    padding: 0.7rem 1.1rem;
     border-radius: 8px;
-    margin-bottom: 1rem;
+    margin-bottom: 1.2rem;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
 }
 
 .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #c8e6c9; }
@@ -180,16 +184,16 @@ body {
 
 .orders-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-    gap: 0.9rem;
-    padding: 0.8rem 0;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1rem;
+    padding: 0.9rem 0;
     margin: 0;
 }
 
 .order-card {
     background: var(--card);
-    border-radius: 10px;
-    box-shadow: 0 3px 8px rgba(90, 70, 162, 0.07);
+    border-radius: 11px;
+    box-shadow: 0 3px 9px rgba(90, 70, 162, 0.08);
     border: 1px solid var(--border-card);
     overflow: hidden;
     display: flex;
@@ -198,11 +202,11 @@ body {
 }
 
 .month-header {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--primary);
-    margin: 1.5rem 0 0.8rem 0;
-    padding-bottom: 5px;
+    margin: 1.6rem 0 0.9rem 0;
+    padding-bottom: 6px;
     border-bottom: 2px solid var(--border-medium);
     grid-column: 1 / -1; 
 }
@@ -211,27 +215,27 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.8rem 1rem;
+    padding: 0.9rem 1.1rem;
     background: var(--bg);
     border-bottom: 1px solid var(--border-light);
 }
 
 .order-id {
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1.15rem;
     color: var(--primary);
     line-height: 1.2;
 }
 
 .order-time {
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     color: #888;
 }
 
 .status-badge {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     font-weight: 600;
-    padding: 0.2rem 0.6rem;
+    padding: 0.22rem 0.65rem;
     border-radius: 50px;
     text-transform: uppercase;
     white-space: nowrap;
@@ -242,31 +246,31 @@ body {
 .status-batal { background: #fbecec; color: #f44336; }
 
 .order-body {
-    padding: 1rem;
+    padding: 1.1rem;
     flex-grow: 1;
 }
 
 .customer-name {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.25rem;
 }
 
 .customer-addr {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     color: #666;
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.9rem;
 }
 
 .produk-list {
-    padding: 0.5rem 0;
+    padding: 0.55rem 0;
     border-top: 1px dashed var(--border-light);
     border-bottom: 1px dashed var(--border-light);
-    margin-bottom: 0.8rem;
+    margin-bottom: 0.9rem;
 }
 .produk-item {
-    font-size: 0.85rem;
-    margin-bottom: 0.2rem;
+    font-size: 0.87rem;
+    margin-bottom: 0.25rem;
 }
 .produk-item:last-child {
     margin-bottom: 0;
@@ -279,46 +283,46 @@ body {
 .meta-row {
     display: flex;
     justify-content: space-between;
-    font-size: 0.85rem;
-    margin-bottom: 0.3rem;
+    font-size: 0.87rem;
+    margin-bottom: 0.35rem;
 }
 .meta-row span {
     color: #777;
 }
 
 .total {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--secondary);
     text-align: right;
-    margin-top: 0.6rem;
+    margin-top: 0.7rem;
 }
 
 .order-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.8rem 1rem;
+    padding: 0.9rem 1.1rem;
     background: var(--bg);
     border-top: 1px solid var(--border-light);
 }
 
 .status-update-group {
     display: flex;
-    gap: 5px;
+    gap: 6px;
 }
 
 .status-select {
-    padding: 0.3rem 0.5rem;
-    border-radius: 6px;
+    padding: 0.35rem 0.55rem;
+    border-radius: 7px;
     border: 1px solid var(--border-medium);
-    font-size: 0.85rem;
+    font-size: 0.87rem;
 }
 
 .btn-icon {
-    padding: 0.8rem 0.8rem;
+    padding: 0.85rem 0.85rem;
     border: none;
-    border-radius: 6px;
+    border-radius: 7px;
     background: var(--primary);
     color: white;
     cursor: pointer;
@@ -342,16 +346,16 @@ body {
 
 .empty {
     text-align: center;
-    padding: 40px 20px;
+    padding: 45px 25px;
     color: #888;
 }
 .empty h3 {
-    margin: 10px 0;
+    margin: 12px 0;
     font-weight: 600;
     color: #555;
 }
 .empty .fas {
-    font-size: 2rem;
+    font-size: 2.2rem;
     color: var(--border-medium);
 }
 
@@ -359,15 +363,15 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 0.5rem;
-    margin-top: 1.5rem;
+    gap: 0.55rem;
+    margin-top: 1.6rem;
 }
 .pagination a, .pagination span {
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.55rem 1.1rem;
+    border-radius: 9px;
     text-decoration: none;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.92rem;
     transition: all 0.2s;
 }
 .pagination a {
@@ -393,49 +397,48 @@ body {
 }
 .pagination-info {
     text-align: center;
-    margin-top: 0.5rem;
-    font-size: 0.85rem;
+    margin-top: 0.6rem;
+    font-size: 0.87rem;
     color: #777;
 }
 
 @media (max-width: 992px) {
     .orders-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     }
 }
 
 @media (max-width: 768px) {
     body { 
-        padding: 0.6rem; 
-        font-size: 13px;
+        font-size: 13.5px;
     }
     
     .stats { 
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 0.6rem; 
+        grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+        gap: 0.7rem; 
     }
     
     .stat-card {
-        padding: 10px 8px;
-        gap: 5px;
+        padding: 11px 9px;
+        gap: 6px;
     }
     
     .stat-icon {
-        font-size: 2rem;
+        font-size: 2.1rem;
     }
 
     .stat-value {
-        font-size: 1.4rem;
+        font-size: 1.45rem;
     }
 
     .stat-label {
-        font-size: 0.75rem;
+        font-size: 0.78rem;
     }
     
     .search-bar { 
         align-items: stretch;
         flex-direction: column; 
-        padding: 0.6rem;
+        padding: 0.7rem;
     }
     .search-bar > div { 
         min-width: 100% !important; 
@@ -443,55 +446,53 @@ body {
     }
     .search-bar > div:last-child {
         display: flex;
-        gap: 0.6rem;
+        gap: 0.7rem;
         justify-content: stretch;
     }
 
     .search-group label {
-        font-size: 0.7rem;
+        font-size: 0.72rem;
     }
 
     .search-group input,
     .search-group select { 
-        padding: 0.4rem 0.6rem;
+        padding: 0.4rem 0.65rem;
         font-size: 0.85rem;
     }
     
     .btn-search,
     .btn-reset {
-        padding: 0.5rem 0.8rem;
-        font-size: 0.8rem;
+        padding: 0.35rem 0.7rem;
+        font-size: 0.72rem;
+        height: 32px;
+        min-width: 65px;
     }
 
     .orders-grid {
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 0.8rem;
+        grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+        gap: 0.9rem;
     }
     
     .order-id {
-        font-size: 1rem;
+        font-size: 1.05rem;
     }
 
     .total {
-        font-size: 1.1rem;
+        font-size: 1.15rem;
     }
 }
 
-@media (max-width: 576px) {
-    body { 
-        padding: 0.4rem; 
-    }
-    
+@media (max-width: 576px) {    
     .stats { 
         grid-template-columns: repeat(2, 1fr);
     }
     
     .stat-card {
-        gap: 8px;
+        gap: 9px;
     }
     
     .stat-icon {
-        font-size: 1.8rem;
+        font-size: 1.9rem;
     }
     
     .stat-content {
@@ -500,24 +501,32 @@ body {
 
     .orders-grid {
         grid-template-columns: 1fr;
-        gap: 0.6rem;
-        padding: 0.6rem 0;
+        gap: 0.7rem;
+        padding: 0.7rem 0;
     }
 
     .order-head, .order-footer {
-        padding: 0.6rem 0.8rem;
+        padding: 0.7rem 0.9rem;
     }
     
     .order-body {
-        padding: 0.8rem;
+        padding: 0.9rem;
     }
     
     .status-select {
-        font-size: 0.8rem;
+        font-size: 0.82rem;
     }
     
     .btn-icon {
         padding: 0.8rem 0.8rem;
+    }
+    
+    .btn-search,
+    .btn-reset {
+        padding: 0.32rem 0.6rem;
+        font-size: 0.7rem;
+        height: 30px;
+        min-width: 60px;
     }
 }
 
@@ -535,6 +544,6 @@ body {
     }
     
     .orders-grid {
-        padding: 0.4rem 0;
+        padding: 0.5rem 0;
     }
 }

@@ -178,42 +178,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 15px;
             min-height: 100vh;
             margin: 0;
-            padding: 0px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
         }
-
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-        }
-
         .main-wrapper {
             display: flex;
             width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
             background: white;
-            box-shadow: 0 5px 30px rgba(90, 70, 162, 0.15);
-            border-radius: 20px;
-            overflow: hidden;
-            border: 1px solid var(--border-dark);
-            min-height: 85vh;
-        }
-
-        @media (max-width: 992px) {
-            .main-wrapper {
-                max-width: 95%;
-            }
+            min-height: 100vh;
         }
 
         @media (max-width: 768px) {
             .main-wrapper {
                 flex-direction: column;
-                min-height: auto;
-                border-radius: 16px;
             }
         }
 
@@ -235,12 +210,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             position: relative;
         }
 
-        @media (max-width: 992px) {
-            .preview-box {
-                width: 340px;
-            }
-        }
-
         @media (max-width: 768px) {
             .preview-box {
                 width: 100%;
@@ -254,7 +223,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             padding: 16px 24px;
             font-size: 1.25rem;
             font-weight: 600;
-            border-bottom: 3px solid var(--border);
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
             gap: 12px;
@@ -262,27 +231,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .form-header { 
             color: var(--primary); 
-            border-bottom: 1px solid var(--border);
         }
         
         .preview-header { 
             background: #fff5f8;
             color: var(--secondary); 
             justify-content: center; 
-            border-bottom: 1px solid var(--border);
         }
 
         .form-body {
             padding: 24px;
-            padding-bottom: 0;
             flex: 1;
             overflow-y: auto;
-        }
-
-        @media (max-width: 768px) {
-            .form-body {
-                padding: 20px;
-            }
         }
 
         .alert {
@@ -518,7 +478,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         @media (max-width: 768px) {
             .action-bar {
                 flex-direction: column;
-                padding: 16px 20px;
             }
         }
 
@@ -550,7 +509,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #4a3a8a);
+            background: linear-gradient(135deg, var(--secondary), #9e3e52);
             color: white;
             box-shadow: 0 4px 12px rgba(90, 70, 162, 0.2);
         }
@@ -796,20 +755,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 maxlength="255"
                             >
                             <small class="help">Pisahkan dengan koma</small>
-                            <div class="variant-tags" id="variantPreview">
-                                <?php if ($varianVal): ?>
-                                    <?php 
-                                    $variants = array_map('trim', explode(',', $varianVal));
-                                    foreach ($variants as $v):
-                                        if (!empty($v)):
-                                    ?>
-                                        <span class="variant-tag"><i class="fas fa-tag"></i> <?= htmlspecialchars($v) ?></span>
-                                    <?php 
-                                        endif;
-                                    endforeach; 
-                                    ?>
-                                <?php endif; ?>
-                            </div>
                         </div>
 
                         <!-- Kategori -->
@@ -829,9 +774,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php endforeach; ?>
                             </select>
                             <small class="help">Kategori produk</small>
-                            <div id="categoryDisplay" class="category-display" style="display: <?= $kategoriVal ? 'block' : 'none' ?>;">
-                                <?= $kategoriVal ? htmlspecialchars($kategoriVal) : '' ?>
-                            </div>
                         </div>
                     </div>
 
@@ -888,7 +830,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fas fa-arrow-left"></i> Kembali
                 </a>
                 <button type="submit" form="editForm" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Update Produk
+                    <i class="fas fa-save"></i> Simpan
                 </button>
             </div>
         </div>
@@ -896,7 +838,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- PREVIEW SECTION (KANAN) -->
         <div class="preview-box">
             <div class="preview-header">
-                <i class="fas fa-eye"></i> Preview Update
+                <i class="fas fa-eye"></i> Peninjauan
             </div>
             <div class="preview-body">
                 <div class="preview-img-container">
@@ -956,13 +898,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             return 'Rp ' + n.toLocaleString('id-ID');
         }
 
-        const createVariantTags = (variants) => {
-            if (!variants?.length) return '';
-            return variants.map(v => 
-                `<span class="variant-tag"><i class="fas fa-tag"></i> ${v.trim()}</span>`
-            ).join('');
-        };
-
         const createPreviewVariantTags = (variants) => {
             if (!variants?.length) return '';
             return variants.map(v => 
@@ -988,8 +923,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const previewPlaceholder = document.getElementById('previewPlaceholder');
         const uploadFileName = document.getElementById('uploadFileName');
         const uploadHint = document.getElementById('uploadHint');
-        const variantPreview = document.getElementById('variantPreview');
-        const categoryDisplay = document.getElementById('categoryDisplay');
 
         // Image handlers
         function handleImageLoad(img) {
@@ -1022,7 +955,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             const initVars = (varianInput.value || '').split(',').map(v => v.trim()).filter(v => v);
             liveVarianDisplay.innerHTML = createPreviewVariantTags(initVars);
-            variantPreview.innerHTML = createVariantTags(initVars);
             
             // Initialize kategori
             if (kategoriSelect.value) {
@@ -1031,11 +963,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 liveKategoriDisplay.textContent = kategoriSelect.value;
                 liveKategoriDisplay.style.display = 'inline-block';
-                categoryDisplay.textContent = kategoriSelect.value;
-                categoryDisplay.style.display = 'block';
             } else {
                 liveKategoriDisplay.style.display = 'none';
-                categoryDisplay.style.display = 'none';
             }
         }
 
@@ -1049,7 +978,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         varianInput.addEventListener('input', e => {
             const vars = e.target.value.split(',').map(v => v.trim()).filter(v => v);
             liveVarianDisplay.innerHTML = createPreviewVariantTags(vars);
-            variantPreview.innerHTML = createVariantTags(vars);
         });
         
         kategoriSelect.addEventListener('change', function(e) {
@@ -1059,11 +987,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 liveKategoriDisplay.textContent = e.target.value;
                 liveKategoriDisplay.style.display = 'inline-block';
-                categoryDisplay.textContent = e.target.value;
-                categoryDisplay.style.display = 'block';
             } else {
                 liveKategoriDisplay.style.display = 'none';
-                categoryDisplay.style.display = 'none';
             }
         });
         

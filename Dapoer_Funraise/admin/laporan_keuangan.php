@@ -188,7 +188,7 @@ $total_pendapatan = (float)$stmt->fetchColumn();
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #f5f0ff 0%, #e8d9ff 100%);
+            background: #f8f6fd;
             min-height: 100vh;
             padding: 2rem;
         }
@@ -419,10 +419,6 @@ $total_pendapatan = (float)$stmt->fetchColumn();
         }
 
         @media (max-width: 768px) {
-            body {
-                padding: 1rem;
-            }
-
             .page-title {
                 font-size: 1.5rem;
             }

@@ -199,6 +199,7 @@ label {
     justify-content: center;
 }
 
+/* Steps Grid Style - 4 cards per row */
 .backgrounds-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -495,6 +496,12 @@ label {
     margin-bottom: 0;
 }
 
+/* ======================================================= */
+/*                RESPONSIVE MEDIA QUERIES                 */
+/* ======================================================= */
+
+
+/* ========= 🟦 Desktop ≥ 1400px ========= */
 @media (min-width: 1400px) {
     .container {
         max-width: 1200px;
@@ -502,6 +509,8 @@ label {
     }
 }
 
+
+/* ========= 🟩 Laptop Lebar ≤ 1200px ========= */
 @media (max-width: 1200px) {
     .backgrounds-grid {
         grid-template-columns: repeat(4, 1fr);
@@ -510,6 +519,7 @@ label {
 }
 
 
+/* ========= 🟧 Laptop / Tablet Landscape ≤ 992px ========= */
 @media (max-width: 992px) {
     .backgrounds-grid {
         grid-template-columns: repeat(3, 1fr);
@@ -520,6 +530,8 @@ label {
     }
 }
 
+
+/* ========= 🟨 Tablet Portrait ≤ 768px ========= */
 @media (max-width: 768px) {
     .backgrounds-grid {
         grid-template-columns: repeat(2, 1fr);
@@ -545,6 +557,8 @@ label {
     }
 }
 
+
+/* ========= 🟫 HP Besar ≤ 576px ========= */
 @media (max-width: 576px) {
 
     .backgrounds-grid {
@@ -568,6 +582,7 @@ label {
         padding: 10px;
     }
 
+    /* tombol dalam card */
     .bg-actions {
         flex-wrap: wrap;
         margin-top: 10px;
@@ -583,7 +598,11 @@ label {
     }
 }
 
+
+/* ========= 📱 HP KECIL ≤ 480px ========= */
 @media (max-width: 480px) {
+
+    /* --- HEADER: tombol kembali ke kanan --- */
     .header-container {
         flex-direction: row !important;
         justify-content: space-between !important;
@@ -603,6 +622,7 @@ label {
         font-size: 18px;
     }
 
+    /* --- CARD 1 BARIS 1 KOLOM --- */
     .backgrounds-grid {
         grid-template-columns: 1fr !important;
     }
@@ -612,6 +632,7 @@ label {
         padding: 12px;
     }
 
+    /* --- Tombol dalam card satu baris --- */
     .bg-actions {
         display: flex;
         flex-direction: row !important;
@@ -622,7 +643,7 @@ label {
 
     .bg-actions button,
     .bg-actions form button {
-        flex: 1;
+        flex: 1; /* Semua tombol sama lebar */
         width: auto;
     }
 }
