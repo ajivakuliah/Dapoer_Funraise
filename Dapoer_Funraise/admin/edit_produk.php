@@ -167,9 +167,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <?php endif; ?>
 
                 <form id="editForm" method="POST" enctype="multipart/form-data">
-                    <!-- BARIS 1: NAMA, HARGA, VARIAN, KATEGORI -->
                     <div class="form-row-meta">
-                        <!-- Nama Produk -->
                         <div class="form-group">
                             <label for="nama">Nama Produk <span class="required">*</span></label>
                             <input 
@@ -183,7 +181,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             >
                         </div>
 
-                        <!-- Harga -->
                         <div class="form-group">
                             <label for="harga">Harga (Rp) <span class="required">*</span></label>
                             <input 
@@ -197,7 +194,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <small class="help">Tanpa titik/koma</small>
                         </div>
 
-                        <!-- Varian -->
                         <div class="form-group">
                             <label for="varian">Varian</label>
                             <input 
@@ -211,7 +207,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <small class="help">Pisahkan dengan koma</small>
                         </div>
 
-                        <!-- Kategori -->
                         <div class="form-group">
                             <label for="kategori">Kategori</label>
                             <select 
@@ -231,7 +226,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
 
-                    <!-- BARIS 2: DESKRIPSI DAN FOTO -->
                     <div class="form-row-desc-foto">
                         <div class="form-group">
                             <label for="deskripsi">Deskripsi</label>
@@ -289,7 +283,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <!-- PREVIEW SECTION (KANAN) -->
         <div class="preview-box">
             <div class="preview-header">
                 <i class="fas fa-eye"></i> Peninjauan
