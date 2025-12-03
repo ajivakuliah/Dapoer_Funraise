@@ -6,16 +6,13 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Pagination
 $perPage = 3;
 $page = max(1, (int)($_GET['page'] ?? 1));
 $offset = ($page - 1) * $perPage;
 
 $searchTerm = trim($_GET['search'] ?? '');
 
-// Query produk
 try {
-    // Siapkan parameter untuk pencarian
     $params = [];
     $searchCondition = '';
     
@@ -23,9 +20,8 @@ try {
         $searchCondition = " WHERE ID LIKE ? OR Nama LIKE ? OR Kategori LIKE ?";
         $params = ["%$searchTerm%", "%$searchTerm%", "%$searchTerm%"];
     }
-
-    // Query untuk mengambil data produk
-    $sql = "SELECT * FROM produk" . $searchCondition . " ORDER BY ID DESC LIMIT ?, ?";
+    
+    $sql = "SELECT * FROM produk" . $searchCondition . " ORDER BY ID ASC LIMIT ?, ?";
     $params[] = $offset;
     $params[] = $perPage;
 
@@ -33,17 +29,14 @@ try {
     $stmt->execute($params);
     $produk = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Hitung total data
     $countSql = "SELECT COUNT(*) FROM produk" . $searchCondition;
     $countStmt = $pdo->prepare($countSql);
-    // Hapus offset dan perPage dari params untuk count query
     $countParams = array_slice($params, 0, count($params) - 2); 
     $countStmt->execute($countParams);
     
     $totalData = (int)$countStmt->fetchColumn();
     $totalPage = ceil($totalData / $perPage);
 } catch (Exception $e) {
-    // Handle error database
     error_log("Database Error: " . $e->getMessage());
     $produk = [];
     $totalData = 0;

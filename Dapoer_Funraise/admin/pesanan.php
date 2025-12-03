@@ -2,16 +2,12 @@
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
-// Pastikan path ke config.php benar sesuai struktur folder Anda
 require_once '../config.php'; 
 
 $error = $success = '';
-
-// --- Parameter Pencarian dan Filter ---
 $q = trim($_GET['q'] ?? '');
 $status_filter = trim($_GET['status'] ?? '');
-$bulan_filter = trim($_GET['bulan'] ?? ''); // ✅ Tambah: Ambil filter bulan (format YYYY-MM)
-
+$bulan_filter = trim($_GET['bulan'] ?? '');
 $page = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 3;
 $offset = ($page - 1) * $per_page;
@@ -19,20 +15,15 @@ $offset = ($page - 1) * $per_page;
 $where = "1=1";
 $params = [];
 
-// --- Logika Filter Status ---
 if ($status_filter !== '' && in_array($status_filter, ['baru', 'diproses', 'selesai', 'batal'])) {
     $where .= " AND status = ?";
     $params[] = $status_filter;
 }
-
-// ✅ Tambah: Logika Filter Bulan
 if ($bulan_filter !== '' && preg_match('/^\d{4}-\d{2}$/', $bulan_filter)) {
-    // Memfilter data berdasarkan tahun dan bulan (YYYY-MM)
     $where .= " AND DATE_FORMAT(created_at, '%Y-%m') = ?";
     $params[] = $bulan_filter;
 }
 
-// --- Logika Pencarian Q (ID atau Nama) ---
 if ($q !== '') {
     if (ctype_digit($q)) {
         $where .= " AND id = ?";
@@ -43,8 +34,6 @@ if ($q !== '') {
     }
 }
 
-
-// --- 🔄 MODIFIKASI: Menghasilkan Daftar Semua Bulan (meskipun kosong) ---
 $available_months = [];
 $indonesian_months = [
     'January' => 'Januari', 'February' => 'Februari', 'March' => 'Maret', 
@@ -58,14 +47,12 @@ $start_year = $current_year;
 $end_year = $current_year;
 
 try {
-    // Tentukan range tahun yang memiliki pesanan
     $stmt_years = $pdo->query("SELECT MIN(YEAR(created_at)) AS min_year, MAX(YEAR(created_at)) AS max_year FROM pesanan");
     $years_result = $stmt_years->fetch(PDO::FETCH_ASSOC);
     if ($years_result && $years_result['min_year']) {
         $start_year = (int)$years_result['min_year'];
         $end_year = (int)$years_result['max_year'];
     }
-    // Pastikan tahun berjalan juga termasuk
     $end_year = max($end_year, $current_year);
     if ($start_year > $current_year) $start_year = $current_year;
     
@@ -73,29 +60,23 @@ try {
     error_log("Error fetching years: " . $e->getMessage());
 }
 
-// Loop melalui semua tahun (dari terbaru ke terlama) dan semua bulan
 for ($year = $end_year; $year >= $start_year; $year--) {
     for ($month = 12; $month >= 1; $month--) {
-        // Jika tahun berjalan, jangan tampilkan bulan di masa depan
         if ($year == $current_year && $month > (int)date('m')) {
             continue; 
         }
         
         $month_padded = str_pad($month, 2, '0', STR_PAD_LEFT);
-        $month_year_key = $year . '-' . $month_padded; // e.g., '2025-12'
+        $month_year_key = $year . '-' . $month_padded;
         
         $timestamp = mktime(0, 0, 0, $month, 1, $year);
         $english_month = date('F', $timestamp);
         
-        // Terjemahkan bulan ke Bahasa Indonesia
         $indonesian_name = ($indonesian_months[$english_month] ?? $english_month) . ' ' . $year;
         
         $available_months[$month_year_key] = $indonesian_name;
     }
 }
-// -----------------------------------------------------
-
-// --- Update status ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     try {
         $id = (int)($_POST['id'] ?? 0);
@@ -116,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status'])) {
     }
 }
 
-// --- Hapus ---
 if (isset($_GET['hapus'])) {
     try {
         $id = (int)$_GET['hapus'];
@@ -125,11 +105,10 @@ if (isset($_GET['hapus'])) {
             $deleted = $stmt->execute([$id]);
             if ($deleted && $stmt->rowCount() > 0) {
                 $_SESSION['success'] = 'Pesanan berhasil dihapus!';
-                // Redirect mempertahankan filter lain
                 $redirect_query = http_build_query(array_filter([
                     'q' => $q, 
                     'status' => $status_filter, 
-                    'bulan' => $bulan_filter // ✅ Tambah: Pertahankan filter bulan saat hapus
+                    'bulan' => $bulan_filter
                 ]));
                 header('Location: pesanan.php' . ($redirect_query ? '?' . $redirect_query : ''));
                 exit;
@@ -141,30 +120,25 @@ if (isset($_GET['hapus'])) {
     }
 }
 
-// --- Ambil data ---
 try {
-    // Hitung total data
     $sql_count = "SELECT COUNT(*) FROM pesanan WHERE $where";
     $stmt_count = $pdo->prepare($sql_count);
     $stmt_count->execute($params);
     $total_orders = (int)$stmt_count->fetchColumn();
     $total_pages = max(1, ceil($total_orders / $per_page));
     
-    // Ambil data dengan limit dan offset
     $sql = "SELECT id, nama_pelanggan, alamat, produk, total, pengambilan, metode_bayar, status, created_at
             FROM pesanan WHERE $where ORDER BY created_at DESC LIMIT $per_page OFFSET $offset";
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Logika Pengelompokan Pesanan per Bulan
     $orders_by_month = [];
     
     foreach ($orders as $order) {
         $english_month = date('F', strtotime($order['created_at']));
         $year = date('Y', strtotime($order['created_at']));
         
-        // Terjemahkan bulan ke Bahasa Indonesia
         $indonesian_month = $indonesian_months[$english_month] ?? $english_month;
         $indonesian_month_year = $indonesian_month . ' ' . $year;
         
@@ -174,7 +148,6 @@ try {
         $orders_by_month[$indonesian_month_year][] = $order;
     }
 
-    // Hitung total status untuk stat cards
     $stmt_all = $pdo->prepare("SELECT status FROM pesanan");
     $stmt_all->execute();
     $all_orders = $stmt_all->fetchAll(PDO::FETCH_ASSOC);
@@ -194,7 +167,6 @@ try {
     $count_baru = $count_diproses = $count_selesai = $count_batal = 0;
 }
 
-// Fungsi helper untuk menampilkan produk dalam keranjang
 function renderProduk($produkJson) {
     $data = json_decode($produkJson, true);
     if (!is_array($data)) return '<div class="produk-item">[Data produk tidak valid]</div>';
@@ -315,14 +287,12 @@ function renderProduk($produkJson) {
             </div>
         <?php else: ?>
             <?php 
-            // Loop per bulan
             foreach ($orders_by_month as $month_name => $monthly_orders): 
             ?>
             
              
                 
                 <?php 
-                // Loop kartu pesanan di dalam bulan tersebut
                 foreach ($monthly_orders as $o): 
                 ?>
                     <div class="order-card">
@@ -382,7 +352,6 @@ function renderProduk($produkJson) {
                                 </div>
                             </form>
                             <?php
-                                // Buat query string yang mempertahankan filter yang ada
                                 $current_query = http_build_query(array_filter([
                                     'q' => $q, 
                                     'status' => $status_filter, 
@@ -409,7 +378,7 @@ function renderProduk($produkJson) {
             $base_query = http_build_query(array_filter([
                 'q' => $q, 
                 'status' => $status_filter, 
-                'bulan' => $bulan_filter // ✅ Tambah: Sertakan bulan filter di pagination
+                'bulan' => $bulan_filter
             ]));
             $base_url = '?' . $base_query . ($base_query ? '&' : '');
             ?>

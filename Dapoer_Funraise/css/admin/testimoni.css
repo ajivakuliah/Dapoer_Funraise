@@ -31,6 +31,7 @@ body {
 .full-bleed {
     padding: 0.8rem;
 }
+
 .controls {
     display: flex;
     flex-wrap: wrap;
@@ -66,7 +67,6 @@ body {
     box-shadow: 0 0 0 3px rgba(90, 70, 162, 0.1);
 }
 
-/* Gaya baru untuk tombol di controls */
 .btn-action {
     padding: 0.7rem 1.2rem;
     border: none;
@@ -75,7 +75,7 @@ body {
     cursor: pointer;
     transition: background-color 0.2s;
     white-space: nowrap;
-    height: 40px; /* Samakan tinggi dengan input */
+    height: 40px;
     display: inline-flex;
     align-items: center;
     gap: 5px;
@@ -126,13 +126,13 @@ table {
     font-size: 0.9rem;
 }
 
-th:nth-child(1), td:nth-child(1) { width: 6%;  } /* ID */
-th:nth-child(2), td:nth-child(2) { width: 7%; } /* Status */
-th:nth-child(3), td:nth-child(3) { width: 12%; } /* Tanggal */
-th:nth-child(4), td:nth-child(4) { width: 13%; } /* Nama */
-th:nth-child(5), td:nth-child(5) { width: 15%; } /* Produk */
-th:nth-child(6), td:nth-child(6) { width: 35%; } /* Komentar */
-th:nth-child(7), td:nth-child(7) { width: 12%;  } /* Aksi */
+th:nth-child(1), td:nth-child(1) { width: 6%; }
+th:nth-child(2), td:nth-child(2) { width: 7%; }
+th:nth-child(3), td:nth-child(3) { width: 12%; }
+th:nth-child(4), td:nth-child(4) { width: 13%; }
+th:nth-child(5), td:nth-child(5) { width: 15%; }
+th:nth-child(6), td:nth-child(6) { width: 35%; }
+th:nth-child(7), td:nth-child(7) { width: 12%; }
 
 th {
     background: #f5f3ff;
@@ -160,7 +160,7 @@ tr:hover { background: #fbf9ff; }
 .status-pending { color: var(--warning); font-weight: 500; }
 
 .action-cell {
-    white-space: nowrap; /* Pastikan tombol tetap di satu baris */
+    white-space: nowrap;
 }
 
 .action-btn {
@@ -217,7 +217,6 @@ tr:hover { background: #fbf9ff; }
     border-color: var(--primary);
 }
 
-/* --- STAT CARD STYLES --- */
 .stats-testimoni-wrapper {
     display: flex;
     justify-content: space-around;
@@ -249,7 +248,7 @@ tr:hover { background: #fbf9ff; }
 .stat-content-testi {
     display: flex;
     flex-direction: column; 
-    align-items: flex-start; /* Ubah ke kiri untuk kerapian */
+    align-items: flex-start;
     flex-grow: 1;
 }
 
@@ -267,7 +266,6 @@ tr:hover { background: #fbf9ff; }
     white-space: nowrap;
 }
 
-/* Status Card Active State */
 .stat-card-testi.active {
     background-color: var(--primary);
     color: white; 
@@ -278,10 +276,6 @@ tr:hover { background: #fbf9ff; }
 .stat-card-testi.active .stat-label-testi {
     color: #ffffff !important;
 }
-
-/* ==================================== */
-/* MEDIA QUERIES START HERE */
-/* ==================================== */
 
 @media (max-width: 992px) {
     .stats-testimoni-wrapper {
@@ -300,6 +294,10 @@ tr:hover { background: #fbf9ff; }
     th, td {
         padding: 0.8rem 0.9rem;
         font-size: 0.85rem;
+    }
+
+    table {
+        min-width: 850px;
     }
 }
 
@@ -338,8 +336,6 @@ tr:hover { background: #fbf9ff; }
     } 
     
     .search-box { 
-        flex-direction: column; 
-        gap: 10px; 
         min-width: 100%;
     }
     
@@ -354,28 +350,80 @@ tr:hover { background: #fbf9ff; }
         padding: 10px; 
     }
     
-    /* Tabel di layar kecil */
     table {
-        min-width: 700px; /* Kurangi min-width */
+        min-width: 650px; 
     }
     
     th, td { 
         padding: 0.7rem 0.5rem; 
         font-size: 0.8rem; 
     }
-    
-    /* Sembunyikan kolom yang kurang penting di layar sangat kecil jika perlu */
-    th:nth-child(5), td:nth-child(5) { /* Produk */
-        /* display: none; */ 
+
+    th:nth-child(3), td:nth-child(3) {
+        width: 15%;
     }
     
-    th:nth-child(3), td:nth-child(3) { /* Tanggal */
-        /* display: none; */
+    th:nth-child(5), td:nth-child(5) {
+        width: 10%;
     }
-    
+
     .action-btn {
         width: 28px;
         height: 28px;
         font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .full-bleed {
+        padding: 0.4rem;
+    }
+    
+    .table-wrapper {
+        margin: 0 -0.4rem;
+        width: calc(100% + 0.8rem);
+        border-radius: 5px;
+    }
+
+    table {
+        min-width: 550px; 
+    }
+
+    th:nth-child(3), td:nth-child(3) {
+        display: none;
+    }
+    th:nth-child(5), td:nth-child(5) {
+        display: none;
+    }
+    
+    th, td { 
+        padding: 0.5rem 0.4rem; 
+        font-size: 0.75rem; 
+    }
+    
+    .stat-value-testi {
+        font-size: 1.3rem;
+    }
+
+    .stat-label-testi {
+        font-size: 0.85rem;
+    }
+
+    .btn-action {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .stat-icon-testi {
+        font-size: 1.8rem;
+    }
+
+    .stat-value-testi {
+        font-size: 1.2rem;
+    }
+    
+    .table-wrapper {
+        border-radius: 0;
     }
 }

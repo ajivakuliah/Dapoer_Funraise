@@ -6,9 +6,6 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// --------------------------------------------------------
-// 1. TANGKAP PARAMETER DARI URL (q, filter, page)
-// --------------------------------------------------------
 $page = max(1, (int)($_GET['page'] ?? 1));
 $per_page = 10;
 $offset = ($page - 1) * $per_page;
@@ -24,7 +21,6 @@ if ($filter === 'verified') {
     $where_clause .= ' AND is_verified = 0';
 }
 
-// 🔹 Logika Pencarian: mencari di kolom nama, produk, atau komentar
 if ($q !== '') {
     $search_term = '%' . strtolower($q) . '%';
     $where_clause .= ' AND (LOWER(nama) LIKE ? OR LOWER(nama_produk) LIKE ? OR LOWER(komentar) LIKE ?)';
@@ -33,9 +29,6 @@ if ($q !== '') {
 
 
 try {
-    // --------------------------------------------------------
-    // 2. HITUNG STATS CARDS (Total, Verified, Pending) - TIDAK TERPENGARUH FILTER Q
-    // --------------------------------------------------------
     $stats_counts = $pdo->query("
         SELECT 
             COUNT(*) AS total_all,
@@ -48,9 +41,6 @@ try {
     $stats_verified = (int)($stats_counts['stats_verified'] ?? 0);
     $stats_pending = (int)($stats_counts['stats_pending'] ?? 0);
     
-    // --------------------------------------------------------
-    // 3. HITUNG TOTAL TERFILTER (untuk Pagination)
-    // --------------------------------------------------------
     $count_sql = "SELECT COUNT(*) FROM testimoni $where_clause";
     
     $count_stmt = $pdo->prepare($count_sql);
@@ -59,21 +49,16 @@ try {
     
     $total_pages = max(1, ceil($total / $per_page));
     $page = min($page, $total_pages);
-    $offset = ($page - 1) * $per_page; // Pastikan offset dihitung ulang jika page berubah
-    
-    // --------------------------------------------------------
-    // 4. AMBIL DATA TESTIMONI YANG SUDAH DIFILTER
-    // --------------------------------------------------------
+    $offset = ($page - 1) * $per_page;    
     $data_sql = "
         SELECT * FROM testimoni 
         $where_clause
-        ORDER BY dikirim_pada DESC 
+        ORDER BY dikirim_pada ASC 
         LIMIT :limit OFFSET :offset
     ";
     
     $stmt = $pdo->prepare($data_sql);
     
-    // Bind parameter q (jika ada) dan limit/offset
     $param_index = 1;
     foreach ($params as $p) {
         $stmt->bindValue($param_index++, $p);
