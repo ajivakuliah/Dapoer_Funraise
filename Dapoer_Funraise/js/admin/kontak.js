@@ -15,7 +15,6 @@ function closeModal() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Expose functions to global scope (diperlukan karena onclick di HTML)
     window.openEditModal = openEditModal;
     window.closeModal = closeModal;
     
