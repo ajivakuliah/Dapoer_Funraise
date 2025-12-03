@@ -250,21 +250,22 @@ $inactive_count = count($carousel_photos) - $active_count;
         
         <div class="section">
             <h2><i class="fas fa-file-alt"></i> Konten Tentang Kami</h2>
-            <form method="POST">
-                <div class="form-group">
-                    <label for="title">Judul:</label>
-                    <input type="text" id="title" name="title" 
-                        value="<?= htmlspecialchars($about['title']) ?>" 
-                        maxlength="150" required class="input-text"
-                        placeholder="Masukkan judul...">
-                </div>
-                
-                <div class="form-group">
-                    <label for="subtitle">Subjudul:</label>
-                    <input type="text" id="subtitle" name="subtitle" 
-                        value="<?= htmlspecialchars($about['subtitle']) ?>" 
-                        maxlength="255" required class="input-text"
-                        placeholder="Masukkan subjudul...">
+            <form method="POST" id="tentang-kami-form">
+                <div class="input-group">
+                    <div class="form-group">
+                        <label for="title">Judul:</label>
+                        <input type="text" id="title" name="title" 
+                            value="<?= htmlspecialchars($about['title']) ?>" 
+                            maxlength="150" required class="input-text"
+                            placeholder="Masukkan judul...">
+                    </div>
+                    <div class="form-group">
+                        <label for="subtitle">Subjudul:</label>
+                        <input type="text" id="subtitle" name="subtitle" 
+                            value="<?= htmlspecialchars($about['subtitle']) ?>" 
+                            maxlength="255" required class="input-text"
+                            placeholder="Masukkan subjudul...">
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -295,26 +296,35 @@ $inactive_count = count($carousel_photos) - $active_count;
                 <h3><i class="fas fa-plus"></i> Tambah Foto Baru</h3>
                 <form method="POST" enctype="multipart/form-data">
                     <div class="input-group">
-                        <div>
+                        <div class="form-group">
                             <label for="new_alt_text">Teks Alternatif:</label>
                             <input type="text" id="new_alt_text" name="new_alt_text" 
                                 maxlength="150" class="input-text"
                                 placeholder="Deskripsi singkat foto...">
                         </div>
-                        <div>
+                        
+                        <div class="form-group">
                             <label for="new_caption">Keterangan:</label>
                             <input type="text" id="new_caption" name="new_caption" 
                                 maxlength="300" class="input-text"
                                 placeholder="Keterangan foto...">
                         </div>
+                        
+                        <div class="form-group">
+                            <label for="new_photo_image">Foto:</label>
+                            <input type="file" name="new_photo_image" accept=".jpg,.jpeg,.png,.gif" required class="file-input">
+                            <span class="help-text">
+                                JPG, PNG, GIF | Maks 2MB
+                            </span>
+                        </div>
                     </div>
                     
                     <div class="form-row">
-                        <input type="file" name="new_photo_image" accept=".jpg,.jpeg,.png,.gif" required class="file-input">
                         <span class="help-text">
-                            Format: JPG, PNG, GIF | Maksimal: 2MB | Ukuran disarankan: 800x600px
+                            <i class="fas fa-info-circle"></i> Format: JPG, PNG, GIF | Maksimal: 2MB | Ukuran disarankan: 800x600px
                         </span>
                     </div>
+                    
                     <button type="submit" name="add_photo" class="btn btn-success">
                         <i class="fas fa-upload"></i> Upload Foto
                     </button>
