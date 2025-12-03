@@ -213,7 +213,7 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
             border-radius: 8px;
             font-size: 15px;
             transition: all 0.3s;
-            background: #f8f9fa;
+            background: white;
         }
         
         .input-text:focus {
@@ -307,7 +307,7 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
         }
         
         .info-value {
-            background: #f8f9fa;
+            background: white;
             padding: 12px 16px;
             border: 2px solid #e0e6ed;
             border-radius: 8px;
@@ -434,49 +434,99 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
         .form-row .form-group {
             margin-bottom: 0;
         }
-        
-        @media (max-width: 992px) {
-            .info-row,
-            .form-row {
-                grid-template-columns: 1fr 1fr;
-                gap: 15px;
-            }
-        }
-        
-        @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-            }
-            
-            .info-row,
-            .form-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .header-container {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .btn-back {
-                align-self: flex-start;
-            }
-            
-            body {
-                padding: 10px;
-            }
-        }
+
+@media (max-width: 480px) {
+    .header-container {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 5px !important;
+        text-align: left !important;
+    }
+
+    .btn-back {
+        padding: 8px 12px;
+        font-size: 12px;
+        width: auto !important;
+    }
+
+    .page-title {
+        font-size: 18px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .info-row {
+        grid-template-columns: 1fr;
+    }
+
+    .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .upload-group {
+        padding: 15px;
+    }
+
+    .input-text {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .info-value {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
+
+/* 📱 Tablet Potrait (≤ 768px) */
+@media (max-width: 768px) {
+
+    .container {
+        padding: 20px;
+    }
+
+    .header-container {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .info-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .page-title {
+        font-size: 20px;
+    }
+}
+
+/* 💻 Tablet Landscape / Laptop kecil (≤ 1024px) */
+@media (max-width: 1024px) {
+
+    .container {
+        padding: 25px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+    }
+}        
     </style>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
         <div class="header-container">
-            <h1 class="page-title"><i class="fas fa-heading"></i> Pengaturan Header</h1>
+            <h1 class="page-title"><i class="fas fa-heading"></i> Edit Header</h1>
             <a href="pengaturan.php" class="btn-back">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>
@@ -562,7 +612,7 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
                     <!-- Timestamp (Readonly) -->
                     <div class="form-group">
                         <label>
-                            <i class="fas fa-clock"></i> Akan Diperbarui Pada:
+                            <i class="fas fa-clock"></i> Diperbarui Pada:
                         </label>
                         <div class="info-value">
                             <span class="timestamp">
@@ -578,7 +628,7 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
                 <!-- Submit Button -->
                 <div class="form-actions">
                     <button type="submit" name="update_header" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan Perubahan Header
+                        <i class="fas fa-save"></i> Simpan Perubahan
                     </button>
                 </div>
             </form>

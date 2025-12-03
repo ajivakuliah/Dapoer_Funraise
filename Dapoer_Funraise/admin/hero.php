@@ -15,9 +15,9 @@ try {
     $hero = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$hero) {
-        $stmt = $pdo->prepare("INSERT INTO hero_section (welcome_text) VALUES ('Selamat Datang di Dapoer Funraise')");
+        $stmt = $pdo->prepare("INSERT INTO hero_section (welcome_text) VALUES ('Selamat Datang di')");
         $stmt->execute();
-        $hero = ['id' => $pdo->lastInsertId(), 'welcome_text' => 'Selamat Datang di Dapoer Funraise'];
+        $hero = ['id' => $pdo->lastInsertId(), 'welcome_text' => 'Selamat Datang di'];
     }
     
     $stmt = $pdo->query("SELECT * FROM hero_backgrounds ORDER BY sort_order ASC, id DESC");
@@ -213,7 +213,7 @@ $inactive_count = count($backgrounds) - $active_count;
             <h2><i class="fas fa-font"></i> Teks Utama</h2>
             <form method="POST">
                 <div class="form-group">
-                    <label for="welcome_text">Teks Selamat Datang:</label>
+                    <label for="welcome_text">Teks Pembuka:</label>
                     <input type="text" id="welcome_text" name="welcome_text" 
                         value="<?= htmlspecialchars($hero['welcome_text']) ?>" 
                         maxlength="200" required class="input-text"
@@ -231,14 +231,11 @@ $inactive_count = count($backgrounds) - $active_count;
         
         <div class="section background-section">
             <div class="section-header">
-                <h2><i class="fas fa-images"></i> Background Images <span class="badge-count"><?= count($backgrounds) ?></span></h2>
-                <span class="info-text">
-                    <i class="fas fa-info-circle"></i> Multiple background bisa aktif
-                </span>
+                <h2><i class="fas fa-images"></i> Gambar Latar Belakang <span class="badge-count"><?= count($backgrounds) ?></span></h2>
             </div>
             
             <div class="upload-form">
-                <h3><i class="fas fa-plus"></i> Tambah Background Baru</h3>
+                <h3><i class="fas fa-plus"></i> Tambah Latar Belakang Baru</h3>
                 <form method="POST" enctype="multipart/form-data">
                     <div class="form-row">
                         <input type="file" name="new_bg_image" accept=".jpg,.jpeg,.png" required class="file-input">
@@ -247,7 +244,7 @@ $inactive_count = count($backgrounds) - $active_count;
                         </span>
                     </div>
                     <button type="submit" name="add_bg" class="btn btn-success">
-                        <i class="fas fa-upload"></i> Upload Background
+                        <i class="fas fa-upload"></i> Simpan Perubahan
                     </button>
                 </form>
             </div>
@@ -345,9 +342,6 @@ $inactive_count = count($backgrounds) - $active_count;
                 <div class="modal-actions">
                     <button type="submit" name="update_bg" class="btn btn-primary">
                         <i class="fas fa-save"></i> Simpan
-                    </button>
-                    <button type="button" onclick="closeModal()" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Batal
                     </button>
                 </div>
             </form>

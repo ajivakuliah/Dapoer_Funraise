@@ -103,7 +103,7 @@ label {
     border-radius: 8px;
     font-size: 15px;
     transition: all 0.3s;
-    background: #f8f9fa;
+    background: white;
 }
 
 .input-text:focus {
@@ -323,7 +323,7 @@ label {
     cursor: pointer;
     transition: all 0.3s;
     font-size: 14px;
-    border: 1px solid #ced4da;
+    border: 1px;
     border-radius: 6px;
 }
 
@@ -468,104 +468,140 @@ label {
     margin-top: 20px;
 }
 
-/* ================================ */
-/* MEDIA QUERIES START HERE */
-/* ================================ */
+/* ============================
+   MEDIA QUERY RESPONSIVE FINAL
+===============================*/
 
-@media (max-width: 1200px) {
+/* HP / Mobile – 1 baris 1 card */
+@media (max-width: 576px) {
+
+    /* Tombol kembali rapi di pojok kanan */
+    .header-container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-back {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    /* Grid jadi 1 kolom */
+    .backgrounds-grid {
+        grid-template-columns: 1fr !important;
+        gap: 15px;
+        width: 100%;
+    }
+
+    /* Card full responsive */
+    .bg-card {
+        padding: 10px;
+        width: 100%;
+    }
+
+    /* Gambar tidak terlalu tinggi */
+    .bg-image {
+        height: 140px;
+        object-fit: cover;
+    }
+
+    /* Header di dalam card */
+    .bg-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        width: 100%;
+    }
+
+    /* Bagian tombol di dalam card → wajib 1 baris */
+    .bg-actions {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+
+        width: 100%;
+        gap: 6px;
+        flex-wrap: nowrap; /* supaya tidak pecah baris */
+    }
+
+    /* Tombol-tombol card */
+    .bg-actions .btn-xs {
+        flex: 1;               /* semua tombol memiliki lebar sama */
+        text-align: center;
+        height: 42px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        white-space: nowrap;   /* cegah teks turun baris */
+    }
+
+    .bg-actions .btn-xs i {
+        font-size: 15px;
+    }
+
+    /* Input urutan */
+    .order-input {
+        width: 55px;
+        font-size: 13px;
+    }
+
+    .order-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+}
+
+/* HP KECIL – MAX 480px */
+@media (max-width: 480px) {
+
+    .container {
+        padding: 18px;
+    }
+
+    .page-title {
+        font-size: 18px;
+    }
+
+    .bg-image {
+        height: 120px;
+    }
+
+    .modal-content {
+        max-width: 95%;
+    }
+}
+
+/* HP MEDIUM – MAX 640px */
+@media (max-width: 640px) {
+    .backgrounds-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bg-image {
+        height: 130px;
+    }
+}
+
+/* TABLET – MAX 768px */
+@media (max-width: 768px) {
+    .backgrounds-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* TABLET LANDSCAPE – MAX 992px */
+@media (max-width: 992px) {
     .backgrounds-grid {
         grid-template-columns: repeat(3, 1fr);
     }
 }
 
-@media (max-width: 900px) {
+/* DESKTOP KECIL – MAX 1200px */
+@media (max-width: 1200px) {
     .backgrounds-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .container {
-        padding: 20px;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px; 
-    }
-
-    .section-header h2, .section-header .info-text {
-        width: 100%;
-        margin-bottom: 0;
-        text-align: left;
-    }
-    
-    .bg-actions {
-        flex-wrap: wrap;
-        gap: 6px; 
-        justify-content: space-between;
-    }
-    
-    .bg-actions .btn-xs {
-        min-width: 40px; 
-        height: 40px;   
-    }
-
-    .bg-actions .order-controls {
-        flex-basis: 100%; 
-        width: 100%;
-        margin-top: 5px;
-        justify-content: center;
-        gap: 12px; 
-    }
-}
-
-@media (max-width: 600px) {
-    .backgrounds-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
-    .btn-back {
-        align-self: flex-start;
-    }
-    
-    body {
-        padding: 0;
-    }
-    
-    .container {
-        padding: 15px;
-    }
-    
-    .bg-actions {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .bg-actions > * {
-        flex-basis: 100%;
-        width: 100%;
-    }
-    
-    .order-controls {
-        justify-content: space-between;
-    }
-    
-    .modal-content {
-        padding: 15px;
-    }
-}
-
-@media (max-width: 400px) {
-    .page-title {
-        font-size: 20px;
-    }
-    h2 {
-        font-size: 18px;
+        grid-template-columns: repeat(3, 1fr);
     }
 }
