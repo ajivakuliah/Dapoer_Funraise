@@ -102,7 +102,7 @@ label {
     border-radius: 8px;
     font-size: 15px;
     transition: all 0.3s;
-    background: #f8f9fa;
+    background: white;
 }
 
 .textarea {
@@ -132,12 +132,12 @@ label {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #5A46A2, #B64B62);
+    background: linear-gradient(135deg, #f9cc22, #b64b62);
     color: white;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #4a3a8a, #8e3a4d);
+    background: linear-gradient(135deg, #f9cc22, #b64b62);
     transform: translateY(-2px);
     box-shadow: 0 6px 12px rgba(90, 70, 162, 0.3);
 }
@@ -496,10 +496,21 @@ label {
     margin-bottom: 0;
 }
 
-/* ==================================== */
-/* MEDIA QUERIES START HERE */
-/* ==================================== */
+/* ======================================================= */
+/*                RESPONSIVE MEDIA QUERIES                 */
+/* ======================================================= */
 
+
+/* ========= 🟦 Desktop ≥ 1400px ========= */
+@media (min-width: 1400px) {
+    .container {
+        max-width: 1200px;
+        margin: auto;
+    }
+}
+
+
+/* ========= 🟩 Laptop Lebar ≤ 1200px ========= */
 @media (max-width: 1200px) {
     .backgrounds-grid {
         grid-template-columns: repeat(4, 1fr);
@@ -507,94 +518,133 @@ label {
     }
 }
 
+
+/* ========= 🟧 Laptop / Tablet Landscape ≤ 992px ========= */
 @media (max-width: 992px) {
     .backgrounds-grid {
         grid-template-columns: repeat(3, 1fr);
     }
+
+    .container {
+        padding: 25px;
+    }
 }
 
+
+/* ========= 🟨 Tablet Portrait ≤ 768px ========= */
 @media (max-width: 768px) {
     .backgrounds-grid {
         grid-template-columns: repeat(2, 1fr);
     }
-    
+
     .container {
         padding: 20px;
     }
-    
+
     .form-row {
         flex-direction: column;
         gap: 15px;
     }
-    
+
     .section-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
     }
-    
-    .info-text {
-        font-size: 12px;
-    }
-}
 
-@media (max-width: 576px) {
-    .backgrounds-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .header-container {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 15px;
-    }
-    
-    .btn-back {
-        align-self: flex-start;
-    }
-    
-    body {
-        padding: 10px;
-    }
-    
-    .modal-row {
-        flex-direction: column;
-        gap: 12px;
-    }
-    
     .page-title {
         font-size: 20px;
     }
-    
-    .add-form, .modal-content {
-        padding: 15px;
+}
+
+
+/* ========= 🟫 HP Besar ≤ 576px ========= */
+@media (max-width: 576px) {
+
+    .backgrounds-grid {
+        grid-template-columns: 1fr;
     }
-    
+
+    body {
+        padding: 0px;
+    }
+
     .btn {
         width: 100%;
         justify-content: center;
     }
-    
+
+    .modal-row {
+        flex-direction: column;
+    }
+
     .bg-info {
         padding: 10px;
     }
-    
+
+    /* tombol dalam card */
     .bg-actions {
         flex-wrap: wrap;
         margin-top: 10px;
     }
-    
+
     .order-controls {
         flex-grow: 1;
         justify-content: center;
     }
-    
-    .order-controls input,
-    .order-controls button {
-        flex-shrink: 0;
-    }
-    
+
     .order-controls input {
         width: 40px;
     }
 }
+
+
+/* ========= 📱 HP KECIL ≤ 480px ========= */
+@media (max-width: 480px) {
+
+    /* --- HEADER: tombol kembali ke kanan --- */
+    .header-container {
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        width: 100%;
+    }
+
+    .btn-back {
+        order: 2;
+        margin-left: auto;
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .page-title {
+        order: 1;
+        font-size: 18px;
+    }
+
+    /* --- CARD 1 BARIS 1 KOLOM --- */
+    .backgrounds-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .bg-card {
+        width: 100% !important;
+        padding: 12px;
+    }
+
+    /* --- Tombol dalam card satu baris --- */
+    .bg-actions {
+        display: flex;
+        flex-direction: row !important;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .bg-actions button,
+    .bg-actions form button {
+        flex: 1; /* Semua tombol sama lebar */
+        width: auto;
+    }
+}
+

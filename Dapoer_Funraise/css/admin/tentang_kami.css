@@ -101,7 +101,7 @@ label {
   border-radius: 8px;
   font-size: 15px;
   transition: all 0.3s;
-  background: #f8f9fa;
+  background: white;
 }
 
 .input-text:focus {
@@ -146,12 +146,12 @@ label {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #5a46a2, #b64b62);
+  background: linear-gradient(135deg, #f9cc22, #b64b62);
   color: white;
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #4a3a8a, #8e3a4d);
+  background: linear-gradient(135deg, #f9cc22, #b64b62);
   transform: translateY(-2px);
   box-shadow: 0 6px 12px rgba(90, 70, 162, 0.3);
 }
@@ -623,107 +623,122 @@ label {
   gap: 6px;
 }
 
-/* ===== RESPONSIVE DESIGN ===== */
-
-@media (max-width: 1200px) {
-  .photos-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+.header-container {
+  position: relative;
 }
 
-@media (max-width: 900px) {
-  .photos-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.btn-back {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.header-container {
+  padding-right: 70px; /* jarak agar judul tidak nabrak tombol */
+}
+
+
+/* ============================
+   HP KECIL (≤ 480px)
+=============================== */
+@media (max-width: 480px) {
 
   .container {
-    padding: 20px;
+    padding: 18px;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .btn-back {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  /* Card hanya 1 kolom */
+  .photos-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .photo-image {
+    height: 120px;
   }
 
   .input-group,
-  .input-group-2,
-  #tentang-kami-form .input-group {
+  .input-group-2 {
     grid-template-columns: 1fr;
-    gap: 15px;
   }
 
-  .upload-form {
-    padding: 12px 15px;
-    margin-bottom: 15px;
-  }
-
-  .upload-form h3 {
-    margin-bottom: 10px;
-    font-size: 15px;
-  }
-
-  .upload-form .input-group {
-    gap: 10px !important;
-    margin-bottom: 12px !important;
-  }
-
-  .upload-form .input-text,
-  .upload-form .file-input {
-    height: 36px;
-    padding: 6px 10px;
+  .modal-content {
+    max-width: 100%;
   }
 }
 
-@media (max-width: 600px) {
-  .photos-grid {
-    grid-template-columns: 1fr;
+
+/* ============================
+   HP BESAR (481px – 768px)
+=============================== */
+@media (max-width: 768px) {
+
+  .container {
+    padding: 22px;
   }
 
   .header-container {
     flex-direction: column;
     align-items: flex-start;
-    gap: 15px;
+    padding-right: 70px;
   }
 
   .btn-back {
-    align-self: flex-start;
+    top: 5px;
+    right: 0;
   }
 
-  body {
-    padding: 10px;
-  }
-
-  .photo-actions {
-    flex-wrap: wrap;
-    gap: 4px;
-    justify-content: space-between;
-  }
-
-  .photo-actions > * {
-    flex-basis: calc(50% - 3px);
-  }
-
-  .order-controls {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-
-  .order-input {
-    width: 40px;
-  }
-
-  .modal-content {
-    padding: 15px;
+  /* Card 1 kolom */
+  .photos-grid {
+    grid-template-columns: 1fr !important;
   }
 
   .input-group,
   .input-group-2 {
-    gap: 12px;
-  }
-
-  .upload-form {
-    padding: 10px 12px;
-    margin-bottom: 12px;
-  }
-
-  .upload-form .input-group {
     grid-template-columns: 1fr;
-    gap: 8px !important;
+  }
+
+  .btn {
+    padding: 9px 15px;
+    font-size: 13px;
   }
 }
+
+
+/* ============================
+   TABLET (769px – 1024px)
+=============================== */
+@media (max-width: 1024px) {
+
+  /* Card tetap 1 kolom sesuai permintaan */
+  .photos-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .page-title {
+    font-size: 18px;
+  }
+
+  .photo-image {
+    height: 150px;
+  }
+
+  .input-group {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .input-group-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+
