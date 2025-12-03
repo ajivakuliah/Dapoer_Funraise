@@ -118,7 +118,7 @@ label {
   border-radius: 8px;
   font-size: 15px;
   transition: all 0.3s;
-  background: #f8f9fa;
+  background: white;
   min-height: 200px;
   resize: vertical;
   font-family: inherit;
@@ -711,6 +711,7 @@ label {
     font-size: 13px;
   }
 }
+
 
 
 /* ============================

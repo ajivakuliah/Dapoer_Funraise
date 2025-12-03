@@ -259,7 +259,7 @@ $inactive_count = count($cards) - $active_count;
             border-radius: 8px;
             font-size: 15px;
             transition: all 0.3s;
-            background: #f8f9fa;
+            background: white;
         }
         
         .textarea {
@@ -300,12 +300,12 @@ $inactive_count = count($cards) - $active_count;
         }
         
         .btn-success {
-            background: linear-gradient(135deg, #f9cc22, #b64b62);
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
             color: white;
         }
         
         .btn-success:hover {
-            background: linear-gradient(135deg, #f9cc22, #b64b62);
+            background: linear-gradient(135deg, #27ae60, #1e8449);
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(252, 199, 224, 0.3);
         }
@@ -664,6 +664,16 @@ $inactive_count = count($cards) - $active_count;
             flex: 1;
             margin-bottom: 0;
         }
+        .header-container {
+            position: relative;
+            padding-right: 80px; /* ruang agar judul tidak ketabrak tombol */
+        }
+        .btn-back {
+            position: absolute;
+            right: 0;
+            top: 0;
+            z-index: 10;
+        }
         
         @media (max-width: 1200px) {
             .backgrounds-grid {
@@ -691,6 +701,7 @@ $inactive_count = count($cards) - $active_count;
                 flex-direction: column;
                 gap: 15px;
             }
+            
         }
         
         @media (max-width: 576px) {
@@ -706,10 +717,11 @@ $inactive_count = count($cards) - $active_count;
             
             .btn-back {
                 align-self: flex-start;
+                padding: 8px 14px;
+                font-size: 12px
             }
-            
-            body {
-                padding: 10px;
+            .page-title {
+                font-size: 18px;
             }
             
             .modal-row {
@@ -815,7 +827,9 @@ $inactive_count = count($cards) - $active_count;
                                 maxlength="255" required class="input-text"
                                 placeholder="Contoh: tel:+6281234567890">
                             <span class="help-text">
-                                Untuk telepon: tel:+6281234567890 | Email: mailto:email@contoh.com | Lokasi: https://maps.google.com/...
+                                Untuk telepon: tel:+6281234567890 
+                                | Email: mailto:email@contoh.com 
+                                | Lokasi: https://maps.google.com/...
                             </span>
                         </div>
                     </div>
@@ -823,7 +837,6 @@ $inactive_count = count($cards) - $active_count;
                     <button type="submit" name="add_card" class="btn btn-success">
                         <i class="fas fa-plus-circle"></i> Tambah Kontak
                     </button>
-                </form>
             </div>
             
             <!-- Existing Cards - 4 cards per row -->
