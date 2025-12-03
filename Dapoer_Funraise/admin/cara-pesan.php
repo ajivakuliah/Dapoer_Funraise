@@ -152,14 +152,14 @@ $inactive_count = count($steps) - $active_count;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kelola Cara Pesan - Admin</title>
+    <title>Edit Langkah - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/admin/cara-pesan.css">
 </head>
 <body>
     <div class="container">
         <div class="header-container">
-            <h1 class="page-title"><i class="fas fa-list-ol"></i> Kelola Cara Pesan</h1>
+            <h1 class="page-title"><i class="fas fa-list-ol"></i> Edit Langkah</h1>
             <a href="pengaturan.php" class="btn-back">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>
