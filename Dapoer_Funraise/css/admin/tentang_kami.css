@@ -741,29 +741,4 @@ label {
 }
 
 
-/* ============================
-   LAPTOP (1025px – 1366px)
-=============================== */
-@media (max-width: 1366px) {
 
-  /* Tetap 1 card per baris */
-  .photos-grid {
-    grid-template-columns: 1fr !important;
-  }
-
-  .modal-content {
-    max-width: 80%;
-  }
-}
-
-
-/* ============================
-   DESKTOP BESAR (≥ 1367px)
-=============================== */
-@media (min-width: 1367px) {
-
-  /* Tetap mengikuti permintaan: 1 card per baris */
-  .photos-grid {
-    grid-template-columns: 1fr !important;
-  }
-}
