@@ -634,13 +634,9 @@ label {
 }
 
 .header-container {
-  padding-right: 70px; /* jarak agar judul tidak nabrak tombol */
+  padding-right: 70px;
 }
 
-
-/* ============================
-   HP KECIL (≤ 480px)
-=============================== */
 @media (max-width: 480px) {
 
   .container {
@@ -656,7 +652,6 @@ label {
     font-size: 12px;
   }
 
-  /* Card hanya 1 kolom */
   .photos-grid {
     grid-template-columns: 1fr !important;
   }
@@ -675,10 +670,6 @@ label {
   }
 }
 
-
-/* ============================
-   HP BESAR (481px – 768px)
-=============================== */
 @media (max-width: 768px) {
 
   .container {
@@ -696,7 +687,6 @@ label {
     right: 0;
   }
 
-  /* Card 1 kolom */
   .photos-grid {
     grid-template-columns: 1fr !important;
   }
@@ -712,13 +702,10 @@ label {
   }
 }
 
-
-/* ============================
-   TABLET (769px – 1024px)
-=============================== */
 @media (max-width: 1024px) {
-
-  /* Card tetap 1 kolom sesuai permintaan */
+  .container {
+    padding: 25px;
+  }
   .photos-grid {
     grid-template-columns: 1fr !important;
   }
@@ -739,6 +726,3 @@ label {
     grid-template-columns: 1fr;
   }
 }
-
-
-

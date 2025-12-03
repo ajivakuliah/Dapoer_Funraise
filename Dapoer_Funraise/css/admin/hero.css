@@ -314,6 +314,8 @@ label {
 
 .form-row {
     margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
 }
 
 .file-input {
@@ -325,6 +327,7 @@ label {
     font-size: 14px;
     border: 1px;
     border-radius: 6px;
+    flex: 1;
 }
 
 .file-input:hover {
@@ -468,18 +471,91 @@ label {
     margin-top: 20px;
 }
 
-/* ============================
-   MEDIA QUERY RESPONSIVE FINAL
-===============================*/
+@media (min-width: 577px) {
+    .upload-form form {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+        flex-wrap: nowrap;
+    }
+    
+    .upload-form .form-row {
+        flex-direction: row;
+        gap: 0;
+        align-items: center;
+        flex: 1;
+        margin-bottom: 0;
+    }
+    
+    .upload-form .file-input {
+        margin-bottom: 0;
+        flex: 1;
+    }
+    
+    .upload-form .help-text {
+        margin-top: 0;
+        margin-left: 10px;
+        flex: 0 0 auto;
+        white-space: nowrap;
+        line-height: 40px; 
+        text-align: right;
+    }
+    
+    .upload-form .btn-success {
+        flex: 0 0 auto;
+        height: 40px;
+        padding: 0 16px;
+        margin-top: 0;
+    }
+}
 
-/* HP / Mobile – 1 baris 1 card */
+@media (max-width: 1200px) {
+    .backgrounds-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+}
+
+@media (max-width: 992px) {
+    .backgrounds-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .backgrounds-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+    .container {
+        padding: 25px;
+    }
+}
+
+@media (max-width: 640px) {
+    .backgrounds-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    .bg-image {
+        height: 130px;
+    }
+}
+
 @media (max-width: 576px) {
-
-    /* Tombol kembali rapi di pojok kanan */
+    .container {
+        padding: 15px;
+    }
     .header-container {
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
+        padding-bottom: 15px;
+    }
+
+    .page-title {
+        font-size: 20px;
     }
 
     .btn-back {
@@ -487,26 +563,26 @@ label {
         font-size: 12px;
     }
 
-    /* Grid jadi 1 kolom */
     .backgrounds-grid {
         grid-template-columns: 1fr !important;
-        gap: 15px;
+        gap: 10px;
         width: 100%;
     }
 
-    /* Card full responsive */
     .bg-card {
         padding: 10px;
         width: 100%;
     }
 
-    /* Gambar tidak terlalu tinggi */
     .bg-image {
         height: 140px;
         object-fit: cover;
     }
+    
+    .bg-info {
+        padding: 10px;
+    }
 
-    /* Header di dalam card */
     .bg-header {
         flex-direction: column;
         align-items: flex-start;
@@ -514,51 +590,79 @@ label {
         width: 100%;
     }
 
-    /* Bagian tombol di dalam card → wajib 1 baris */
     .bg-actions {
         display: flex;
         flex-direction: row;
         justify-content: space-between;
         align-items: center;
-
         width: 100%;
         gap: 6px;
-        flex-wrap: nowrap; /* supaya tidak pecah baris */
+        flex-wrap: nowrap;
+        margin-top: 10px;
     }
 
-    /* Tombol-tombol card */
     .bg-actions .btn-xs {
-        flex: 1;               /* semua tombol memiliki lebar sama */
+        flex: 1;
         text-align: center;
-        height: 42px;
+        height: 40px;
         font-size: 13px;
         display: flex;
         align-items: center;
         justify-content: center;
-        white-space: nowrap;   /* cegah teks turun baris */
+        white-space: nowrap;
     }
 
     .bg-actions .btn-xs i {
         font-size: 15px;
     }
 
-    /* Input urutan */
     .order-input {
-        width: 55px;
+        width: 50px;
         font-size: 13px;
     }
 
     .order-controls {
-        width: 100%;
+        width: auto;
         justify-content: space-between;
+        gap: 4px;
+    }
+    
+    .upload-form {
+        padding: 15px;
+    }
+    
+    .file-input {
+        padding: 8px;
+    }
+    
+    .upload-form form {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .upload-form .form-row {
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 0;
+    }
+    
+    .upload-form .help-text {
+        text-align: left;
+        margin-top: 5px;
+        margin-left: 0;
+        line-height: 1.4;
+    }
+    
+    .upload-form .btn-success {
+        width: 100%;
+        height: auto;
+        padding: 10px 16px;
     }
 }
 
-/* HP KECIL – MAX 480px */
 @media (max-width: 480px) {
-
     .container {
-        padding: 18px;
+        padding: 10px;
     }
 
     .page-title {
@@ -571,37 +675,10 @@ label {
 
     .modal-content {
         max-width: 95%;
+        padding: 20px;
     }
-}
-
-/* HP MEDIUM – MAX 640px */
-@media (max-width: 640px) {
-    .backgrounds-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .bg-image {
-        height: 130px;
-    }
-}
-
-/* TABLET – MAX 768px */
-@media (max-width: 768px) {
-    .backgrounds-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-/* TABLET LANDSCAPE – MAX 992px */
-@media (max-width: 992px) {
-    .backgrounds-grid {
-        grid-template-columns: repeat(3, 1fr);
-    }
-}
-
-/* DESKTOP KECIL – MAX 1200px */
-@media (max-width: 1200px) {
-    .backgrounds-grid {
-        grid-template-columns: repeat(3, 1fr);
+    
+    h2 {
+        font-size: 18px;
     }
 }

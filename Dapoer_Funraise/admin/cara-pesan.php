@@ -7,17 +7,14 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Get cara pesan section data
 $section = null;
 $steps = [];
 
 try {
-    // Get section data - take first record
     $stmt = $pdo->query("SELECT * FROM cara_pesan_section ORDER BY id DESC LIMIT 1");
     $section = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$section) {
-        // Create default
         $stmt = $pdo->prepare("INSERT INTO cara_pesan_section (title, subtitle) VALUES ('Cara Pesan', 'Mudah dan cepat, hanya dalam 4 langkah')");
         $stmt->execute();
         $section = [
@@ -27,7 +24,6 @@ try {
         ];
     }
     
-    // Get steps ordered by sort_order
     $stmt = $pdo->query("SELECT * FROM cara_pesan_steps ORDER BY sort_order ASC, step_number ASC");
     $steps = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
@@ -35,10 +31,8 @@ try {
     die("Error: " . $e->getMessage());
 }
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['update_section'])) {
-        // Update section title and subtitle
         $title = trim($_POST['title']);
         $subtitle = trim($_POST['subtitle']);
         
@@ -50,7 +44,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
     } elseif (isset($_POST['update_step'])) {
-        // Update step
         $step_id = (int)$_POST['step_id'];
         $step_number = (int)$_POST['step_number'];
         $title = trim($_POST['step_title']);
@@ -66,18 +59,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
     } elseif (isset($_POST['add_step'])) {
-        // Add new step
         $step_number = (int)$_POST['step_number'];
         $title = trim($_POST['step_title']);
         $description = trim($_POST['description']);
         $icon_class = trim($_POST['icon_class']);
         
-        // Get max sort_order and add 1
         $stmt = $pdo->query("SELECT MAX(sort_order) as max_order FROM cara_pesan_steps");
         $max = $stmt->fetch(PDO::FETCH_ASSOC);
         $sort_order = ($max['max_order'] ?? 0) + 1;
         
-        // Insert new step (active by default)
         $stmt = $pdo->prepare("INSERT INTO cara_pesan_steps (step_number, title, description, icon_class, sort_order, is_active) VALUES (?, ?, ?, ?, ?, 1)");
         if ($stmt->execute([$step_number, $title, $description, $icon_class, $sort_order])) {
             $_SESSION['success'] = 'Langkah baru berhasil ditambahkan';
@@ -86,10 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
     } elseif (isset($_POST['toggle_active'])) {
-        // Toggle step active status
         $step_id = (int)$_POST['step_id'];
         
-        // Get current status
         $stmt = $pdo->prepare("SELECT is_active FROM cara_pesan_steps WHERE id = ?");
         $stmt->execute([$step_id]);
         $current = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -106,7 +94,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
     } elseif (isset($_POST['update_order'])) {
-        // Update sort order
         $step_id = (int)$_POST['step_id'];
         $sort_order = (int)$_POST['sort_order'];
         
@@ -118,10 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
     } elseif (isset($_POST['delete_step'])) {
-        // Delete step
         $step_id = (int)$_POST['step_id'];
         
-        // Delete from database
         $stmt = $pdo->prepare("DELETE FROM cara_pesan_steps WHERE id = ?");
         if ($stmt->execute([$step_id])) {
             $_SESSION['success'] = 'Langkah berhasil dihapus';
@@ -130,20 +115,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     
-    // If there's an error, redirect with error message
     header('Location: cara-pesan.php');
     exit;
 }
 
-// Display success/error messages if any
 $success_msg = isset($_SESSION['success']) ? $_SESSION['success'] : '';
 $error_msg = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 
-// Clear session messages after displaying
 if (isset($_SESSION['success'])) unset($_SESSION['success']);
 if (isset($_SESSION['error'])) unset($_SESSION['error']);
 
-// Count statistics
 $active_count = count(array_filter($steps, fn($step) => $step['is_active']));
 $inactive_count = count($steps) - $active_count;
 ?>
