@@ -87,7 +87,7 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
                         $row['nama_pelanggan'],
                         $nama . $varian,
                         $qty,
-                        number_format($row['total'], 0, ',', '.'),
+                        $row['total'], // Tampilkan angka asli tanpa format
                         ucfirst($row['status'])
                     ]);
                 } else {
@@ -113,7 +113,7 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
                 $row['nama_pelanggan'],
                 $row['produk'],
                 '-',
-                number_format($row['total'], 0, ',', '.'),
+                $row['total'], // Tampilkan angka asli tanpa format
                 ucfirst($row['status'])
             ]);
         }
@@ -136,7 +136,7 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
     ]);
     $total = $stmt->fetchColumn();
 
-    fputcsv($output, ['', '', '', '', '', 'TOTAL PENDAPATAN', number_format($total, 0, ',', '.'), '']);
+    fputcsv($output, ['', '', '', '', '', 'TOTAL PENDAPATAN', $total, '']); // Tampilkan angka asli tanpa format
     fclose($output);
     exit;
 }
