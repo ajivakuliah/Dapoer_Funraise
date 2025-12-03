@@ -7,7 +7,7 @@ if (!isset($_SESSION['username'])) {
 }
 
 $page = max(1, (int)($_GET['page'] ?? 1));
-$per_page = 10;
+$per_page = 3;
 $offset = ($page - 1) * $per_page;
 $q = trim($_GET['q'] ?? '');
 
@@ -92,10 +92,7 @@ $msg = $_GET['msg'] ?? '';
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="../css/admin/testimoni.css">
 </head>
-<body>
-
-<div class="full-bleed">
-    
+<body>    
     <div class="stats-testimoni-wrapper">
         <div class="stat-card-testi <?= $filter === 'all' ? 'active' : '' ?>" onclick="window.location.href='?filter=all&q=<?= urlencode($q) ?>&page=1'">
             <div class="stat-icon-testi"><i class="fas fa-list-alt"></i></div>

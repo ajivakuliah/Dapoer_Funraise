@@ -44,8 +44,8 @@ if (!isset($_SESSION['username'])) {
             <div class="menu-icon">
                 <i class="fas fa-images"></i>
             </div>
-            <h3 class="menu-title">Hero Section</h3>
-            <p class="menu-desc">Kelola background dan teks utama halaman depan</p>
+            <h3 class="menu-title">Beranda</h3>
+            <p class="menu-desc">Kelola latar belakang dan teks utama halaman depan</p>
             <a href="hero.php" class="btn-edit">
                 <i class="fas fa-edit"></i> Edit
             </a>
@@ -55,7 +55,7 @@ if (!isset($_SESSION['username'])) {
             <div class="menu-icon">
                 <i class="fas fa-list-ol"></i>
             </div>
-            <h3 class="menu-title">Cara Pesan</h3>
+            <h3 class="menu-title">Langkah</h3>
             <p class="menu-desc">Atur langkah-langkah cara melakukan pemesanan</p>
             <a href="cara-pesan.php" class="btn-edit">
                 <i class="fas fa-edit"></i> Edit
@@ -66,7 +66,7 @@ if (!isset($_SESSION['username'])) {
             <div class="menu-icon">
                 <i class="fas fa-info-circle"></i>
             </div>
-            <h3 class="menu-title">Tentang Kami</h3>
+            <h3 class="menu-title">Konten</h3>
             <p class="menu-desc">Kelola informasi, sejarah dan foto</p>
             <a href="tentang_kami.php" class="btn-edit">
                 <i class="fas fa-edit"></i> Edit
@@ -100,19 +100,12 @@ if (!isset($_SESSION['username'])) {
                 <i class="fab fa-whatsapp"></i>
             </div>
             <h3 class="menu-title">Tombol WhatsApp</h3>
-            <p class="menu-desc">Kelola tombol WhatsApp floating di website</p>
+            <p class="menu-desc">Kelola tombol WhatsApp di website</p>
             <a href="whatsapp.php" class="btn-edit">
                 <i class="fab fa-whatsapp"></i> Kelola
             </a>
         </div>
     </div>
-    
-    <div class="logout-section">
-        <a href="../logout.php" class="btn-logout">
-            <i class="fas fa-sign-out-alt"></i> Keluar
-        </a>
-    </div>
-
 </div>
 
 <script src="../js/admin/pengaturan.js"></script>

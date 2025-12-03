@@ -305,7 +305,7 @@ function renderProduk($produkJson) {
                                 <?php
                                 $statusMap = [
                                     'baru' => ['icon' => 'clock', 'text' => 'Baru'],
-                                    'diproses' => ['icon' => 'sync-alt', 'text' => 'Diproses'],
+                                    'diproses' => ['icon' => 'sync-alt', 'text' =>  'Diproses'],
                                     'selesai' => ['icon' => 'check-circle', 'text' => 'Selesai'],
                                     'batal' => ['icon' => 'times-circle', 'text' => 'Dibatalkan']
                                 ];

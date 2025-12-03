@@ -192,11 +192,6 @@ foreach ($whatsapp_buttons as $button) {
             
             <div class="add-form">
                 <h3><i class="fas fa-plus"></i> Tambah Tombol WhatsApp Baru</h3>
-                <p class="help-text" style="margin-bottom: 15px;">
-                    <i class="fas fa-exclamation-triangle text-warning"></i>
-                    Tombol baru akan ditambahkan dalam status **NONAKTIF**. 
-                    Untuk mengaktifkannya, klik tombol toggle pada card tombol.
-                </p>
                 <form method="POST">
                     <div class="form-row">
                         <div class="form-group">
@@ -204,9 +199,6 @@ foreach ($whatsapp_buttons as $button) {
                             <input type="text" id="button_text" name="button_text" 
                                 value="Pesan Sekarang" required class="input-text"
                                 placeholder="Contoh: Pesan Sekarang" maxlength="100">
-                            <span class="help-text">
-                                Teks yang akan ditampilkan pada tombol WhatsApp
-                            </span>
                         </div>
                         
                         <div class="form-group">
@@ -221,7 +213,7 @@ foreach ($whatsapp_buttons as $button) {
                     </div>
                     
                     <button type="submit" name="add_button" class="btn btn-success">
-                        <i class="fas fa-plus-circle"></i> Tambah Tombol WhatsApp (Nonaktif)
+                        <i class="fas fa-plus-circle"></i> Tambah
                     </button>
                 </form>
             </div>
@@ -337,9 +329,6 @@ foreach ($whatsapp_buttons as $button) {
                 <div class="modal-actions">
                     <button type="submit" name="update_button" class="btn btn-primary">
                         <i class="fas fa-save"></i> Simpan Perubahan
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">
-                        <i class="fas fa-times"></i> Batal
                     </button>
                 </div>
             </form>

@@ -1,10 +1,14 @@
 <?php
-require 'config.php';
+require '../config.php';
 
 if (!isset($pdo) || !($pdo instanceof PDO)) {
     http_response_code(500);
     exit('Internal Server Error: Database connection not established.');
 }
+
+// Set constants untuk upload directory
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+define('UPLOAD_URL', 'uploads/');
 
 session_start();
 if (!isset($_SESSION['username'])) {
@@ -50,6 +54,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = "Varian tidak valid. Pisahkan dengan koma, contoh: S,M,L";
         } else {
             $foto_name = null;
+            
+            // Handle photo upload
             if (!empty($_FILES['foto']['name']) && is_uploaded_file($_FILES['foto']['tmp_name'])) {
                 $original = basename($_FILES['foto']['name']);
                 $ext = strtolower(pathinfo($original, PATHINFO_EXTENSION));
@@ -67,11 +73,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } elseif ($_FILES['foto']['size'] > 3 * 1024 * 1024) {
                     $msg = 'Ukuran file terlalu besar. Maksimal 3MB.';
                 } else {
-                    $upload_dir = __DIR__ . "/uploads/";
-                    if (!is_dir($upload_dir)) {
-                        mkdir($upload_dir, 0755, true);
+                    if (!is_dir(UPLOAD_DIR)) {
+                        mkdir(UPLOAD_DIR, 0755, true);
                     }
-                    if (!move_uploaded_file($_FILES['foto']['tmp_name'], $upload_dir . $foto_name)) {
+                    if (!move_uploaded_file($_FILES['foto']['tmp_name'], UPLOAD_DIR . $foto_name)) {
                         $msg = 'Gagal menyimpan file. Periksa izin folder uploads.';
                     }
                 }
@@ -79,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!$msg) {
                 try {
-                    $stmt = $pdo->prepare("INSERT INTO produk (Nama, Kategori, Harga, Varian, Deskripsi_Produk, Foto_Produk) VALUES (?, ?, ?, ?, ?, ?)");
+                    $stmt = $pdo->prepare("INSERT INTO produk (Nama, Kategori, Harga, Varian, Deskripsi_Produk, Foto_Produk, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
                     $stmt->execute([
                         substr($nama, 0, 100),
                         $kategori ?: null,
@@ -88,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         substr($deskripsi, 0, 2000),
                         $foto_name
                     ]);
-                    header('Location: ./admin/daftar_produk.php?msg=' . urlencode('Produk berhasil ditambahkan!'));
+                    header('Location: daftar_produk.php?msg=' . urlencode('Produk berhasil ditambahkan!'));
                     exit;
                 } catch (PDOException $e) {
                     error_log("Insert Produk Error: " . $e->getMessage());
@@ -115,6 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --soft: #DFBEE0;
             --text-muted: #9180BB;
             --border: #e8e6f2;
+            --border-dark: #d8d2f0;
             --bg-light: #faf9ff;
         }
 
@@ -130,28 +136,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #333;
             font-size: 15px;
             min-height: 100vh;
-            margin:0;
-            padding: 0;
+            margin: 0;
         }
-
         .main-wrapper {
             display: flex;
-            gap: 2px;
             width: 100%;
-            margin: 0 auto;
             background: white;
-            box-shadow: 0 5px 30px rgba(90, 70, 162, 0.12);
-            border-radius: 16px;
-            overflow: hidden;
+            min-height: 100vh;
         }
 
         @media (max-width: 768px) {
             .main-wrapper {
                 flex-direction: column;
-            }
-            
-            body {
-                padding: 20px 10px;
             }
         }
 
@@ -160,58 +156,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             background: white;
             display: flex;
             flex-direction: column;
+            position: relative;
             border-right: 2px solid #B64B62;
         }
 
         .preview-box {
-            width: 360px;
+            width: 380px;
             flex-shrink: 0;
             background: white;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
 
         @media (max-width: 768px) {
             .preview-box {
                 width: 100%;
+                border-top: 2px solid var(--border-dark);
+                border-right: none;
             }
         }
 
         .form-header, .preview-header {
             background: #faf5ff;
-            padding: 12px 20px;
-            font-size: 1.2rem;
+            padding: 16px 24px;
+            font-size: 1.25rem;
             font-weight: 600;
-            border-bottom: 1px solid #f0eaff;
+            border-bottom: 1px solid var(--border);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .form-header { color: var(--primary); }
-        .preview-header { color: var(--secondary); justify-content: center; }
+        .form-header { 
+            color: var(--primary); 
+        }
+        
+        .preview-header { 
+            background: #fff5f8;
+            color: var(--secondary); 
+            justify-content: center; 
+        }
 
         .form-body {
-            padding: 20px;
-            padding-bottom: 1px;
+            padding: 24px;
             flex: 1;
+            overflow-y: auto;
         }
 
         .alert {
             background: #fff8f8;
             color: #c0392b;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-            border-left: 3px solid var(--secondary);
-            font-size: 0.92rem;
+            padding: 14px 18px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--secondary);
+            font-size: 0.94rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+        }
+
+        .alert.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-left-color: #4caf50;
         }
 
         .form-group {
-            margin-bottom: 14px;
+            margin-bottom: 16px;
         }
 
         .form-group:last-child {
@@ -221,8 +234,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         .form-group label {
             display: block;
             font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 0.95rem;
+            margin-bottom: 8px;
+            font-size: 0.96rem;
             color: var(--primary);
         }
 
@@ -235,10 +248,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         textarea,
         select {
             width: 100%;
-            padding: 12px 16px;
+            padding: 14px 18px;
             border: 2px solid var(--border);
-            border-radius: 10px;
-            font-size: 0.95rem;
+            border-radius: 12px;
+            font-size: 0.96rem;
             background: var(--bg-light);
             font-family: inherit;
             transition: all 0.2s ease;
@@ -250,25 +263,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             outline: none;
             border-color: var(--primary);
             background: white;
-            box-shadow: 0 0 0 3px rgba(90, 70, 162, 0.1);
+            box-shadow: 0 0 0 4px rgba(90, 70, 162, 0.12);
         }
 
         /* DROPDOWN STYLING */
         select {
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%235A46A2' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='%235A46A2' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 16px center;
-            background-size: 10px;
-            padding-right: 40px;
+            background-position: right 18px center;
+            background-size: 12px;
+            padding-right: 45px;
             cursor: pointer;
         }
 
         .form-row-meta {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 16px;
-            margin-bottom: 16px;
+            gap: 18px;
+            margin-bottom: 20px;
         }
 
         @media (max-width: 1024px) {
@@ -288,44 +301,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .help {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
-            margin-top: 4px;
+            margin-top: 5px;
             display: block;
         }
 
         .variant-tags {
             display: flex;
             flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 6px;
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .variant-tag {
             background: var(--soft);
             color: var(--primary);
-            padding: 4px 10px;
+            padding: 5px 12px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.82rem;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
         }
 
         .category-display {
             display: inline-block;
             background: #f0f0ff;
             color: var(--primary);
-            padding: 4px 10px;
-            border-radius: 15px;
-            font-size: 0.85rem;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 0.86rem;
             font-weight: 500;
-            margin-top: 6px;
+            margin-top: 8px;
+            border: 1px solid #e5e0ff;
         }
 
         .form-row-desc-foto {
             display: flex;
-            gap: 16px;
+            gap: 20px;
         }
 
         @media (max-width: 768px) {
@@ -341,9 +355,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         textarea {
-            min-height: 150px;
+            min-height: 160px;
             resize: none;
-            padding: 14px 16px;
+            padding: 16px 18px;
+            line-height: 1.5;
         }
 
         .upload-area {
@@ -352,35 +367,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 20px 16px;
+            gap: 10px;
+            padding: 24px 20px;
             border: 2px dashed var(--soft);
-            border-radius: 10px;
+            border-radius: 12px;
             background: var(--bg-light);
             cursor: pointer;
-            min-height: 150px;
+            min-height: 160px;
             text-align: center;
             transition: all 0.2s;
         }
 
         .upload-area:hover {
             border-color: var(--primary);
+            background: #f9f7ff;
         }
 
         .upload-area i {
-            font-size: 1.8rem;
+            font-size: 2rem;
             color: var(--text-muted);
         }
 
         .upload-text {
-            font-size: 0.95rem;
+            font-size: 0.98rem;
             font-weight: 600;
             color: var(--primary);
         }
 
         .upload-hint {
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        .upload-hint .warning {
+            color: var(--secondary);
+        }
+
+        .current-foto {
+            font-weight: 500;
+            background: #f0f0ff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.85rem;
         }
 
         .upload-input {
@@ -394,12 +424,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .action-bar {
-            padding: 12px 20px;
+            padding: 16px 24px;
             background: #fbf9ff;
-            border-top: 1px solid #f3f0ff;
+            border-top: 1px solid var(--border);
             display: flex;
-            gap: 12px;
+            gap: 15px;
             justify-content: flex-end;
+            align-items: center;
+            margin-top: auto;
         }
 
         @media (max-width: 768px) {
@@ -408,64 +440,86 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        .action-info {
+            flex: 1;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            padding-right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: 10px;
+            gap: 10px;
+            padding: 12px 24px;
+            border-radius: 12px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.96rem;
             cursor: pointer;
             text-decoration: none;
             border: none;
             transition: all 0.2s ease;
             font-family: inherit;
-            min-width: 120px;
+            min-width: 130px;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--secondary), #9e3e52);
             color: white;
-            box-shadow: 0 3px 8px rgba(182, 75, 98, 0.2);
+            box-shadow: 0 4px 12px rgba(90, 70, 162, 0.2);
         }
 
         .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 10px rgba(182, 75, 98, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(90, 70, 162, 0.25);
+            background: linear-gradient(135deg, #6a56c2, #5a46a2);
         }
 
         .btn-secondary {
             background: linear-gradient(135deg, var(--soft), #c8a5d0);
             color: var(--primary);
+            border: 1px solid #e0c8e5;
         }
 
         .btn-secondary:hover {
-            background: linear-gradient(135deg, #d0a8d5, #c095cb);
+            background: linear-gradient(135deg, #e0c8e5, #d0a8d5);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(223, 190, 224, 0.3);
         }
 
         .preview-body {
-            padding: 20px;
+            padding: 24px;
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            gap: 16px;
+            gap: 20px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .preview-body {
+                padding: 20px;
+            }
         }
 
         .preview-img-container {
             width: 100%;
-            max-width: 260px;
-            height: 200px;
+            max-width: 280px;
+            height: 220px;
             display: flex;
             align-items: center;
             justify-content: center;
             background: var(--bg-light);
-            border-radius: 10px;
+            border-radius: 12px;
             overflow: hidden;
-            border: 1px solid #f0eaff;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
         .preview-img-placeholder {
@@ -474,13 +528,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             align-items: center;
             justify-content: center;
             color: var(--text-muted);
-            padding: 10px;
+            padding: 15px;
             text-align: center;
+            width: 100%;
+            height: 100%;
         }
 
         .preview-img-placeholder i {
-            font-size: 2.5rem;
-            margin-bottom: 8px;
+            font-size: 2.8rem;
+            margin-bottom: 10px;
         }
 
         .preview-img {
@@ -488,60 +544,107 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             max-height: 100%;
             object-fit: contain;
             display: none;
+            border-radius: 10px;
+        }
+
+        .preview-img.loaded {
+            display: block;
         }
 
         .preview-text {
             text-align: center;
-            max-width: 260px;
+            max-width: 280px;
+            width: 100%;
         }
 
         .preview-text h3 {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             color: var(--primary);
             min-height: 1.4em;
+            line-height: 1.3;
         }
 
         .preview-meta {
-            font-size: 0.95rem;
-            margin-bottom: 12px;
+            font-size: 1rem;
+            margin-bottom: 15px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
         }
 
         .preview-meta span {
             color: var(--secondary);
             font-weight: 600;
+            font-size: 1.1rem;
         }
 
         .preview-category-badge {
             display: inline-block;
             background: var(--soft);
             color: var(--primary);
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 0.85rem;
+            padding: 5px 14px;
+            border-radius: 16px;
+            font-size: 0.88rem;
             font-weight: 500;
+            border: 1px solid #e5d5e9;
         }
 
         .preview-text p {
-            font-size: 0.92rem;
+            font-size: 0.94rem;
             color: #666;
-            line-height: 1.5;
-            min-height: 60px;
+            line-height: 1.6;
+            min-height: 70px;
+            text-align: left;
+            background: #f9f9ff;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+        }
+
+        .preview-updated {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-top: 15px;
+            font-style: italic;
+            text-align: center;
+            padding: 8px 12px;
+            background: #f5f3ff;
+            border-radius: 8px;
+            border: 1px dashed var(--soft);
+        }
+
+        /* Variant tags in preview */
+        #liveVarianDisplay {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: center;
+        }
+
+        #liveVarianDisplay span {
+            display: inline-block;
+            background: #f0f0f0;
+            color: #666;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            border: 1px solid #e0e0e0;
         }
     </style>
 </head>
 <body>
     <div class="main-wrapper">
+        <!-- FORM SECTION (KIRI) -->
         <div class="form-box">
             <div class="form-header">
                 <i class="fas fa-plus-circle"></i>
-                Tambah Produk
+                Tambah Produk Baru
             </div>
             <div class="form-body">
                 <?php if ($msg): ?>
@@ -564,6 +667,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 value="<?= htmlspecialchars($namaVal) ?>" 
                                 placeholder="Contoh: Jus Mangga Segar"
                                 maxlength="100"
+                                required
                             >
                         </div>
 
@@ -576,6 +680,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 name="harga" 
                                 value="<?= htmlspecialchars($hargaVal) ?>" 
                                 placeholder="45000"
+                                required
+                                min="1"
                             >
                             <small class="help">Tanpa titik/koma</small>
                         </div>
@@ -592,7 +698,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 maxlength="255"
                             >
                             <small class="help">Pisahkan dengan koma</small>
-                            <div class="variant-tags" id="variantPreview"></div>
                         </div>
 
                         <!-- Kategori -->
@@ -612,9 +717,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 <?php endforeach; ?>
                             </select>
                             <small class="help">Kategori produk</small>
-                            <div id="categoryDisplay" class="category-display" style="display: <?= $kategoriVal ? 'block' : 'none' ?>;">
-                                <?= $kategoriVal ? htmlspecialchars($kategoriVal) : '' ?>
-                            </div>
                         </div>
                     </div>
 
@@ -634,8 +736,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <label for="foto">Foto Produk</label>
                             <div class="upload-area" id="uploadArea">
                                 <i class="fas fa-cloud-upload-alt"></i>
-                                <div class="upload-text" id="uploadFileName">Klik atau seret file</div>
-                                <div class="upload-hint">JPG, PNG, WebP • ≤3MB</div>
+                                <div class="upload-text" id="uploadFileName">
+                                    Upload foto produk
+                                </div>
+                                <div class="upload-hint" id="uploadHint">
+                                    JPG, PNG, WebP • ≤3MB
+                                </div>
                                 <input 
                                     id="foto" 
                                     type="file" 
@@ -644,24 +750,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     class="upload-input"
                                 >
                             </div>
+                            <small class="help">Unggah foto produk (opsional)</small>
                         </div>
                     </div>
                 </form>
             </div>
 
             <div class="action-bar">
-                <a href="./admin/daftar_produk.php" class="btn btn-secondary">
+                <div class="action-info">
+                    <i class="fas fa-info-circle"></i>
+                    Semua produk akan tampil di daftar produk setelah disimpan
+                </div>
+                <a href="daftar_produk.php" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Kembali
                 </a>
                 <button type="submit" form="addForm" class="btn btn-primary">
-                    <i class="fas fa-save"></i> Simpan
+                    <i class="fas fa-save"></i> Simpan Produk
                 </button>
             </div>
         </div>
 
+        <!-- PREVIEW SECTION (KANAN) -->
         <div class="preview-box">
             <div class="preview-header">
-                <i class="fas fa-eye"></i> Peninjauan 
+                <i class="fas fa-eye"></i> Peninjauan
             </div>
             <div class="preview-body">
                 <div class="preview-img-container">
@@ -669,7 +781,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <i class="fas fa-image"></i>
                         <div>Belum ada foto</div>
                     </div>
-                    <img id="livePreviewImg" class="preview-img" src="" alt="Preview Produk">
+                    <img id="livePreviewImg" class="preview-img" src="" alt="Preview Produk" style="display: none;">
                 </div>
                 <div class="preview-text">
                     <h3 id="liveNama">Nama Produk</h3>
@@ -679,6 +791,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <span id="liveKategoriDisplay" class="preview-category-badge" style="display: none;"></span>
                     </div>
                     <p id="liveDeskripsi">Deskripsi produk akan muncul...</p>
+                    
+                    <div class="preview-updated">
+                        <i class="fas fa-info-circle"></i> Preview akan diperbarui saat Anda mengisi form
+                    </div>
                 </div>
             </div>
         </div>
@@ -690,10 +806,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             return 'Rp ' + n.toLocaleString('id-ID');
         }
 
-        const createVariantTags = (variants) => {
+        const createPreviewVariantTags = (variants) => {
             if (!variants?.length) return '';
             return variants.map(v => 
-                `<span class="variant-tag"><i class="fas fa-tag"></i> ${v.trim()}</span>`
+                `<span>${v.trim()}</span>`
             ).join('');
         };
 
@@ -714,48 +830,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const livePreviewImg = document.getElementById('livePreviewImg');
         const previewPlaceholder = document.getElementById('previewPlaceholder');
         const uploadFileName = document.getElementById('uploadFileName');
-        const variantPreview = document.getElementById('variantPreview');
-        const categoryDisplay = document.getElementById('categoryDisplay');
+        const uploadHint = document.getElementById('uploadHint');
 
         // Initialize with current values
-        liveNama.textContent = namaInput.value || 'Nama Produk';
-        liveHarga.textContent = formatRupiah(hargaInput.value);
-        liveDeskripsi.textContent = deskripsiInput.value || 'Deskripsi produk akan muncul...';
-        
-        const initVars = (varianInput.value || '').split(',').map(v => v.trim()).filter(v => v);
-        liveVarianDisplay.innerHTML = createVariantTags(initVars);
-        variantPreview.innerHTML = createVariantTags(initVars);
-        
-        // Initialize kategori
-        if (kategoriSelect.value) {
-            liveKategoriDisplay.textContent = kategoriSelect.value;
-            liveKategoriDisplay.style.display = 'inline-block';
-            categoryDisplay.textContent = kategoriSelect.value;
-            categoryDisplay.style.display = 'block';
+        function initializePreview() {
+            liveNama.textContent = namaInput.value || 'Nama Produk';
+            liveHarga.textContent = formatRupiah(hargaInput.value);
+            liveDeskripsi.textContent = deskripsiInput.value || 'Deskripsi produk akan muncul...';
+            
+            const initVars = (varianInput.value || '').split(',').map(v => v.trim()).filter(v => v);
+            liveVarianDisplay.innerHTML = createPreviewVariantTags(initVars);
+            
+            // Initialize kategori
+            if (kategoriSelect.value) {
+                liveKategoriDisplay.textContent = kategoriSelect.value;
+                liveKategoriDisplay.style.display = 'inline-block';
+            } else {
+                liveKategoriDisplay.style.display = 'none';
+            }
         }
 
         // Live updates
-        namaInput.addEventListener('input', e => liveNama.textContent = e.target.value.trim() || 'Nama Produk');
+        namaInput.addEventListener('input', e => {
+            const value = e.target.value.trim() || 'Nama Produk';
+            liveNama.textContent = value;
+        });
         
-        hargaInput.addEventListener('input', e => liveHarga.textContent = formatRupiah(e.target.value));
+        hargaInput.addEventListener('input', e => {
+            liveHarga.textContent = formatRupiah(e.target.value);
+        });
         
-        deskripsiInput.addEventListener('input', e => liveDeskripsi.textContent = e.target.value.trim() || 'Deskripsi produk akan muncul...');
+        deskripsiInput.addEventListener('input', e => {
+            const value = e.target.value.trim();
+            liveDeskripsi.textContent = value || 'Deskripsi produk akan muncul...';
+        });
         
         varianInput.addEventListener('input', e => {
             const vars = e.target.value.split(',').map(v => v.trim()).filter(v => v);
-            liveVarianDisplay.innerHTML = createVariantTags(vars);
-            variantPreview.innerHTML = createVariantTags(vars);
+            if (vars.length > 0) {
+                liveVarianDisplay.innerHTML = createPreviewVariantTags(vars);
+            } else {
+                liveVarianDisplay.innerHTML = '';
+            }
         });
         
         kategoriSelect.addEventListener('change', function(e) {
             if (e.target.value) {
                 liveKategoriDisplay.textContent = e.target.value;
                 liveKategoriDisplay.style.display = 'inline-block';
-                categoryDisplay.textContent = e.target.value;
-                categoryDisplay.style.display = 'block';
             } else {
                 liveKategoriDisplay.style.display = 'none';
-                categoryDisplay.style.display = 'none';
             }
         });
         
@@ -764,19 +888,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (file) {
                 const name = file.name.length > 22 ? file.name.substring(0, 19) + '...' : file.name;
                 uploadFileName.textContent = name;
+                uploadFileName.style.color = 'var(--secondary)';
+                
+                // Update hint text
+                uploadHint.innerHTML = `File: <span class="current-foto">${name}</span>`;
+                
                 const reader = new FileReader();
                 reader.onload = ev => {
                     livePreviewImg.src = ev.target.result;
+                    livePreviewImg.classList.add('loaded');
                     livePreviewImg.style.display = 'block';
                     previewPlaceholder.style.display = 'none';
                 };
                 reader.readAsDataURL(file);
             } else {
-                uploadFileName.textContent = 'Klik atau seret file';
-                livePreviewImg.style.display = 'none';
-                previewPlaceholder.style.display = 'flex';
+                // Reset jika user cancel
+                resetPhotoDisplay();
             }
         });
+
+        // Fungsi untuk reset display foto
+        function resetPhotoDisplay() {
+            uploadFileName.textContent = 'Upload foto produk';
+            uploadFileName.style.color = 'var(--primary)';
+            
+            // Reset hint text
+            uploadHint.innerHTML = 'JPG, PNG, WebP • ≤3MB';
+            
+            // Reset preview image
+            livePreviewImg.style.display = 'none';
+            livePreviewImg.classList.remove('loaded');
+            previewPlaceholder.style.display = 'flex';
+            previewPlaceholder.innerHTML = `
+                <i class="fas fa-image"></i>
+                <div>Belum ada foto</div>
+            `;
+        }
 
         // Form validation
         document.getElementById('addForm').addEventListener('submit', function(e) {
@@ -793,7 +940,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 hargaInput.focus();
                 return;
             }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                const originalHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
+                submitBtn.disabled = true;
+                
+                // Reset button after 5 seconds (in case submission fails silently)
+                setTimeout(() => {
+                    submitBtn.innerHTML = originalHtml;
+                    submitBtn.disabled = false;
+                }, 5000);
+            }
         });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializePreview);
+        
+        // Drag and drop untuk upload area
+        const uploadArea = document.getElementById('uploadArea');
+        if (uploadArea) {
+            uploadArea.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary)';
+                uploadArea.style.background = '#f5f3ff';
+            });
+            
+            uploadArea.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--soft)';
+                uploadArea.style.background = 'var(--bg-light)';
+            });
+            
+            uploadArea.addEventListener('drop', function(e) {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--soft)';
+                uploadArea.style.background = 'var(--bg-light)';
+                
+                if (e.dataTransfer.files.length) {
+                    fotoInput.files = e.dataTransfer.files;
+                    const event = new Event('change', { bubbles: true });
+                    fotoInput.dispatchEvent(event);
+                }
+            });
+        }
     </script>
 </body>
 </html>

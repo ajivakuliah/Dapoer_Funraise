@@ -102,7 +102,7 @@ label {
     border-radius: 8px;
     font-size: 15px;
     transition: all 0.3s;
-    background: #f8f9fa;
+    background: white;
 }
 
 .input-text:focus {
@@ -317,7 +317,7 @@ label {
     padding: 20px;
     border-radius: 10px;
     margin-bottom: 25px;
-    border: 2px dashed #25D366;
+    border: 2px dashed #b64b62;
 }
 
 .empty-state {
@@ -562,11 +562,6 @@ label {
     .btn-back {
         align-self: flex-start;
     }
-    
-    body {
-        padding: 10px;
-    }
-    
     .modal-row {
         flex-direction: column;
         gap: 12px;
