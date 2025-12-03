@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         $stmt = $pdo->prepare("UPDATE tentang_kami_section SET title = ?, subtitle = ?, content = ? WHERE id = ?");
         if ($stmt->execute([$title, $subtitle, $content, $about['id']])) {
-            $_SESSION['success'] = 'Konten tentang kami berhasil diperbarui';
+            $_SESSION['success'] = 'Konten berhasil diperbarui';
             header('Location: tentang_kami.php');
             exit;
         }
@@ -223,14 +223,14 @@ $inactive_count = count($carousel_photos) - $active_count;
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kelola Tentang Kami - Admin</title>
+    <title>Edit Konten - Admin</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="../css/admin/tentang_kami.css">
 </head>
 <body>
     <div class="container">
         <div class="header-container">
-            <h1 class="page-title"><i class="fas fa-info-circle"></i> Kelola Tentang Kami</h1>
+            <h1 class="page-title"><i class="fas fa-info-circle"></i> Edit Konten</h1>
             <a href="pengaturan.php" class="btn-back">
                 <i class="fas fa-arrow-left"></i> Kembali
             </a>
@@ -249,7 +249,7 @@ $inactive_count = count($carousel_photos) - $active_count;
         <?php endif; ?>
         
         <div class="section">
-            <h2><i class="fas fa-file-alt"></i> Konten Tentang Kami</h2>
+            <h2><i class="fas fa-file-alt"></i> Konten</h2>
             <form method="POST" id="tentang-kami-form">
                 <div class="input-group">
                     <div class="form-group">
@@ -272,10 +272,7 @@ $inactive_count = count($carousel_photos) - $active_count;
                     <label for="content">Konten:</label>
                     <textarea id="content" name="content" 
                         rows="8" required class="textarea"
-                        placeholder="Masukkan konten tentang kami..."><?= htmlspecialchars($about['content']) ?></textarea>
-                    <span class="help-text">
-                        Gunakan baris baru (enter) untuk membuat paragraf baru.
-                    </span>
+                        placeholder="Masukkan konten..."><?= htmlspecialchars($about['content']) ?></textarea>
                 </div>
                 
                 <button type="submit" name="update_about" class="btn btn-primary">
@@ -287,9 +284,6 @@ $inactive_count = count($carousel_photos) - $active_count;
         <div class="section carousel-section">
             <div class="section-header">
                 <h2><i class="fas fa-images"></i> Galeri Foto <span class="badge-count"><?= count($carousel_photos) ?></span></h2>
-                <span class="info-text">
-                    <i class="fas fa-info-circle"></i> Foto akan ditampilkan di carousel halaman tentang kami
-                </span>
             </div>
             
             <div class="upload-form">
@@ -297,7 +291,7 @@ $inactive_count = count($carousel_photos) - $active_count;
                 <form method="POST" enctype="multipart/form-data">
                     <div class="input-group">
                         <div class="form-group">
-                            <label for="new_alt_text">Teks Alternatif:</label>
+                            <label for="new_alt_text">Teks:</label>
                             <input type="text" id="new_alt_text" name="new_alt_text" 
                                 maxlength="150" class="input-text"
                                 placeholder="Deskripsi singkat foto...">
@@ -313,9 +307,6 @@ $inactive_count = count($carousel_photos) - $active_count;
                         <div class="form-group">
                             <label for="new_photo_image">Foto:</label>
                             <input type="file" name="new_photo_image" accept=".jpg,.jpeg,.png,.gif" required class="file-input">
-                            <span class="help-text">
-                                JPG, PNG, GIF | Maks 2MB
-                            </span>
                         </div>
                     </div>
                     
@@ -326,7 +317,7 @@ $inactive_count = count($carousel_photos) - $active_count;
                     </div>
                     
                     <button type="submit" name="add_photo" class="btn btn-success">
-                        <i class="fas fa-upload"></i> Upload Foto
+                        <i class="fas fa-upload"></i> Unggah Foto
                     </button>
                 </form>
             </div>
@@ -430,7 +421,7 @@ $inactive_count = count($carousel_photos) - $active_count;
                 </div>
                 
                 <div class="form-group">
-                    <label for="modalAltText">Teks Alternatif:</label>
+                    <label for="modalAltText">Teks :</label>
                     <input type="text" id="modalAltText" name="alt_text" 
                         maxlength="150" class="input-text"
                         placeholder="Deskripsi singkat foto...">
@@ -445,10 +436,7 @@ $inactive_count = count($carousel_photos) - $active_count;
                 
                 <div class="modal-actions">
                     <button type="submit" name="update_photo" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Simpan
-                    </button>
-                    <button type="button" onclick="closeModal()" class="btn btn-secondary">
-                        <i class="fas fa-times"></i> Batal
+                        <i class="fas fa-save"></i> Simpan Perubahan
                     </button>
                 </div>
             </form>
