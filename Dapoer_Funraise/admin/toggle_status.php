@@ -12,7 +12,6 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Get product ID from URL
 $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 if ($id <= 0) {
@@ -21,7 +20,6 @@ if ($id <= 0) {
 }
 
 try {
-    // Get current status
     $stmt = $pdo->prepare("SELECT Status FROM produk WHERE ID = ?");
     $stmt->execute([$id]);
     $produk = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -31,7 +29,6 @@ try {
         exit;
     }
     
-    // Toggle status
     $newStatus = ($produk['Status'] === 'aktif') ? 'tidak_aktif' : 'aktif';
     
     $updateStmt = $pdo->prepare("UPDATE produk SET Status = ?, updated_at = CURRENT_TIMESTAMP WHERE ID = ?");

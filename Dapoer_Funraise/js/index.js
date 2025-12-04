@@ -1,4 +1,3 @@
-// STABLE NAVIGATION - Tidak berubah-ubah saat scroll
 document.addEventListener('DOMContentLoaded', function() {
     if ('scrollRestoration' in window.history) window.history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
@@ -9,7 +8,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return header ? header.offsetHeight : 80;
     }
 
-    // Enhanced fade-in with staggered animation
     const fadeElements = document.querySelectorAll('.fade-in');
     const fadeObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry, index) => {
@@ -23,12 +21,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
     fadeElements.forEach(el => fadeObserver.observe(el));
 
-    // STABLE NAVIGATION SYSTEM
     const sections = document.querySelectorAll('section[id]');
     const navLinks = document.querySelectorAll('.nav-links a');
     let currentActive = '';
     
-    // Gunakan Intersection Observer untuk navigasi yang lebih stabil
     const sectionObserver = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
@@ -42,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     });
                     
-                    // Update URL hash without scrolling
                     if (history.replaceState) {
                         history.replaceState(null, null, `#${id}`);
                     }
@@ -56,7 +51,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     sections.forEach(section => sectionObserver.observe(section));
 
-    // Smooth scroll dengan offset
     navLinks.forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             e.preventDefault();
@@ -65,7 +59,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const target = document.querySelector(targetId);
             if (!target) return;
 
-            // Update active nav immediately
             navLinks.forEach(link => link.classList.remove('active'));
             this.classList.add('active');
             currentActive = targetId.substring(1);
@@ -79,15 +72,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 behavior: 'smooth'
             });
             
-            // Update URL
             history.pushState(null, null, targetId);
             
-            // Close mobile menu if open
             closeMobileMenu();
         });
     });
 
-    // Handle browser back/forward buttons
     window.addEventListener('popstate', function() {
         const hash = window.location.hash;
         if (hash) {
@@ -105,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Focus form on load if URL hash
     const namaInput = document.getElementById('nama');
     if (namaInput && window.location.hash === '#testimoni-section') {
         setTimeout(() => {
@@ -115,7 +104,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 400);
     }
 
-    // Back to top
     const btnBackToTop = document.getElementById('btnBackToTop');
     if (btnBackToTop) {
         function updateScrollButton() {
@@ -126,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
         btnBackToTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
     }
 
-    // Add click effects to buttons
     document.querySelectorAll('.btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             const ripple = document.createElement('span');
@@ -148,7 +135,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Initialize active nav based on current hash
     function setActiveNavFromHash() {
         const hash = window.location.hash;
         if (hash) {
@@ -161,7 +147,6 @@ document.addEventListener('DOMContentLoaded', function() {
     setActiveNavFromHash();
 });
 
-// Hero Slider Functions
 let currentHeroSlide = 0;
 const heroSlides = document.querySelectorAll('.hero-slide');
 const heroDots = document.querySelectorAll('.hero-dot');
@@ -182,17 +167,15 @@ function changeHeroSlide(direction) {
     showHeroSlide(newIndex);
 }
 
-window.changeHeroSlide = changeHeroSlide; // Expose to HTML
-window.goToHeroSlide = showHeroSlide; // Expose to HTML
+window.changeHeroSlide = changeHeroSlide;
+window.goToHeroSlide = showHeroSlide;
 
-// Auto-advance hero slider
 if (heroSlides.length > 1) {
     setInterval(() => {
         changeHeroSlide(1);
     }, 5000);
 }
 
-// About Carousel Functions
 let currentAboutSlide = 0;
 const aboutSlides = document.querySelectorAll('.about-carousel-slide');
 const aboutDots = document.querySelectorAll('.about-carousel-dot');
@@ -212,17 +195,15 @@ function changeAboutSlide(direction) {
     showAboutSlide(newIndex);
 }
 
-window.changeAboutSlide = changeAboutSlide; // Expose to HTML
-window.goToAboutSlide = showAboutSlide; // Expose to HTML
+window.changeAboutSlide = changeAboutSlide;
+window.goToAboutSlide = showAboutSlide;
 
-// Auto-advance about carousel
 if (aboutSlides.length > 1) {
     setInterval(() => {
         changeAboutSlide(1);
     }, 4000);
 }
 
-// Interactive Functions
 function animateCard(card) {
     card.style.transform = 'scale(0.95)';
     setTimeout(() => {
@@ -270,12 +251,11 @@ function validateForm() {
     return true;
 }
 
-window.animateCard = animateCard; // Expose to HTML
-window.toggleAccordion = toggleAccordion; // Expose to HTML
-window.refreshCaptcha = refreshCaptcha; // Expose to HTML
-window.validateForm = validateForm; // Expose to HTML
+window.animateCard = animateCard;
+window.toggleAccordion = toggleAccordion;
+window.refreshCaptcha = refreshCaptcha;
+window.validateForm = validateForm;
 
-// ==== MOBILE NAV MENU - IMPROVED ====
 let isMenuOpen = false;
 
 function toggleMenu() {
@@ -286,7 +266,6 @@ function toggleMenu() {
     isMenuOpen = !isMenuOpen;
     nav.classList.toggle('show');
     
-    // Toggle hamburger icon
     if (isMenuOpen) {
         menuToggle.innerHTML = '✕';
         menuToggle.setAttribute('aria-expanded', 'true');
@@ -312,14 +291,12 @@ function closeMobileMenu() {
     }
 }
 
-// Close menu when clicking on a link
 document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelectorAll('.nav-links a');
     navLinks.forEach(link => {
         link.addEventListener('click', closeMobileMenu);
     });
 
-    // Close menu when clicking outside
     document.addEventListener('click', (e) => {
         const nav = document.querySelector('.nav-links');
         const menuToggle = document.querySelector('.menu-toggle');
@@ -331,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Close menu on escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && isMenuOpen) {
             closeMobileMenu();
@@ -339,18 +315,15 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-window.toggleMenu = toggleMenu; // Expose to HTML
+window.toggleMenu = toggleMenu;
 
-// Handle window resize - close menu on desktop
 window.addEventListener('resize', function() {
     if (window.innerWidth >= 769) {
         closeMobileMenu();
     }
 });
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    // Add ripple effect styles
     const style = document.createElement('style');
     style.textContent = `
         .ripple {
@@ -375,16 +348,13 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
     
-    // Initialize mobile menu state
     const menuToggle = document.querySelector('.menu-toggle');
     if (menuToggle) {
         menuToggle.setAttribute('aria-expanded', 'false');
     }
 });
 
-// Add touch-friendly improvements for mobile
 document.addEventListener('DOMContentLoaded', function() {
-    // Add touch feedback to cards
     const touchElements = document.querySelectorAll('.order-card, .contact-card, .testimoni-accordion');
     
     touchElements.forEach(element => {
@@ -406,7 +376,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Prevent zoom on double tap for buttons
     const buttons = document.querySelectorAll('button, .btn, a.btn');
     buttons.forEach(button => {
         button.addEventListener('touchend', function(e) {
@@ -415,7 +384,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
-// Optimize for mobile performance
 let lastScrollTop = 0;
 const header = document.querySelector('.app-header');
 
@@ -424,10 +392,8 @@ if (header) {
         const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
         
         if (scrollTop > lastScrollTop && scrollTop > 100) {
-            // Scrolling down
             header.style.transform = 'translateY(-100%)';
         } else {
-            // Scrolling up
             header.style.transform = 'translateY(0)';
         }
         

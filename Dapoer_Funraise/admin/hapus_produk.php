@@ -13,20 +13,17 @@ if (!$id || !is_numeric($id)) {
     exit;
 }
 
-// Ambil nama file foto dari database
 $stmt = $pdo->prepare("SELECT Foto_Produk FROM produk WHERE ID=?");
 $stmt->execute([$id]);
 $p = $stmt->fetch();
 
 if ($p) {
-    // Hapus file foto jika ada
     if (!empty($p['Foto_Produk']) && file_exists(__DIR__ . '/uploads/' . $p['Foto_Produk'])) {
         if (!unlink(__DIR__ . 'uploads/' . $p['Foto_Produk'])) {
             error_log("Gagal menghapus file: uploads/" . $p['Foto_Produk']);
         }
     }
 
-    // Hapus record di database
     try {
         $delStmt = $pdo->prepare("DELETE FROM produk WHERE ID=?");
         $delStmt->execute([$id]);

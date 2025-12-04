@@ -1,12 +1,9 @@
-// Fungsi untuk inisialisasi grafik
 function initCharts() {
-    // Pastikan variabel data global sudah tersedia
     if (typeof pendapatanData === 'undefined' || typeof produkData === 'undefined') {
         console.error('Data grafik (pendapatanData atau produkData) tidak ditemukan.');
         return;
     }
 
-    // Grafik Pendapatan
     const pendapatanChartElement = document.getElementById('pendapatanChart');
     if (pendapatanChartElement) {
         if (pendapatanData.length > 0 && pendapatanData.some(item => item.pendapatan > 0)) {
@@ -68,7 +65,6 @@ function initCharts() {
                 }
             });
         } else {
-            // Tampilkan pesan jika tidak ada data
             pendapatanChartElement.parentElement.innerHTML = `
                 <div class="no-data">
                     <i class="fas fa-chart-line"></i>
@@ -79,28 +75,25 @@ function initCharts() {
         }
     }
 
-    // Grafik Produk Terlaris (Pie Chart)
     const produkChartElement = document.getElementById('produkChart');
     if (produkChartElement) {
         if (produkData.length > 0) {
             const ctx2 = produkChartElement.getContext('2d');
             const labels = produkData.map(item => {
-                // Potong nama produk jika terlalu panjang
                 const nama = item.nama_produk;
                 return nama.length > 15 ? nama.substring(0, 12) + '...' : nama;
             });
             const data = produkData.map(item => item.total_terjual);
             
-            // Warna untuk pie chart (menggunakan tema Dapoer Funraise)
             const backgroundColors = [
-                'rgba(90, 70, 162, 0.8)',    // Ungu tua
-                'rgba(182, 75, 98, 0.8)',    // Merah muda
-                'rgba(249, 204, 34, 0.8)',   // Kuning
-                'rgba(72, 187, 120, 0.8)',   // Hijau
-                'rgba(42, 31, 61, 0.8)',     // Ungu sangat tua
-                'rgba(144, 128, 187, 0.8)',  // Ungu muda
-                'rgba(223, 190, 224, 0.8)',  // Ungu sangat muda
-                'rgba(248, 246, 253, 0.8)'   // Putih ungu
+                'rgba(90, 70, 162, 0.8)',
+                'rgba(182, 75, 98, 0.8)',
+                'rgba(249, 204, 34, 0.8)',
+                'rgba(72, 187, 120, 0.8)',
+                'rgba(42, 31, 61, 0.8)',
+                'rgba(144, 128, 187, 0.8)',
+                'rgba(223, 190, 224, 0.8)',
+                'rgba(248, 246, 253, 0.8)'
             ];
 
             const borderColors = [
@@ -131,7 +124,7 @@ function initCharts() {
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false, // Sembunyikan legend default
+                            display: false,
                         },
                         tooltip: {
                             callbacks: {
@@ -157,7 +150,6 @@ function initCharts() {
                 }
             });
 
-            // Tambahkan custom legend di bawah chart
             const legendContainer = document.createElement('div');
             legendContainer.className = 'chart-legend';
             
@@ -190,7 +182,6 @@ function initCharts() {
             
             produkChartElement.parentElement.appendChild(legendContainer);
         } else {
-            // Tampilkan pesan jika tidak ada data
             produkChartElement.parentElement.innerHTML = `
                 <div class="no-data">
                     <i class="fas fa-chart-pie"></i>
@@ -203,18 +194,15 @@ function initCharts() {
 }
 
 function showSection(section) {
-    // Hide all sections
     document.querySelectorAll('.content-section').forEach(el => {
         el.classList.remove('active');
     });
     
-    // Show selected section
     const target = document.getElementById(section + '-section');
     if (target) {
         target.classList.add('active');
     }
     
-    // Update active menu
     document.querySelectorAll('.sidebar-menu a').forEach(el => {
         el.classList.remove('active');
     });
@@ -224,14 +212,11 @@ function showSection(section) {
         menuItem.classList.add('active');
     }
     
-    // Close sidebar on mobile
     if (window.innerWidth <= 992) {
         document.getElementById('sidebar').classList.remove('active');
     }
 
-    // Jika kembali ke dashboard, inisialisasi ulang grafik
     if (section === 'dashboard') {
-        // Hapus elemen chart lama sebelum inisialisasi ulang
         const chartContainers = document.querySelectorAll('.chart-container');
         chartContainers.forEach(container => {
             const oldCanvas = container.querySelector('canvas');
@@ -242,7 +227,6 @@ function showSection(section) {
             if (oldLegend) {
                 oldLegend.remove();
             }
-            // Buat canvas baru agar Chart.js bisa inisialisasi ulang
             const newCanvas = document.createElement('canvas');
             if (container.id === 'pendapatanChartContainer') {
                  newCanvas.id = 'pendapatanChart';
@@ -250,7 +234,6 @@ function showSection(section) {
                  newCanvas.id = 'produkChart';
             }
             
-            // Tambahkan kembali elemen canvas ke container yang kosong
             if (newCanvas.id) {
                  container.appendChild(newCanvas);
             }
@@ -265,7 +248,6 @@ function toggleSidebar() {
     sidebar.classList.toggle('active');
 }
 
-// Close sidebar when clicking outside on mobile
 document.addEventListener('click', function(event) {
     const sidebar = document.getElementById('sidebar');
     const toggle = document.querySelector('.mobile-toggle');
@@ -277,23 +259,19 @@ document.addEventListener('click', function(event) {
     }
 });
 
-// Close sidebar when resizing to desktop
 window.addEventListener('resize', function() {
     if (window.innerWidth > 992) {
         document.getElementById('sidebar').classList.remove('active');
     }
 });
 
-// Initial setup
 document.addEventListener('DOMContentLoaded', function() {
     showSection('dashboard');
     initCharts();
     
-    // Expose functions to global scope (diperlukan karena onclick di HTML)
     window.showSection = showSection;
     window.toggleSidebar = toggleSidebar;
     
-    // Handle iframe loading
     const iframes = document.querySelectorAll('iframe');
     iframes.forEach(iframe => {
         iframe.onload = function() {
@@ -302,7 +280,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         iframe.onerror = function() {
             console.error('Iframe failed to load:', iframe.src);
-            // Coba akses contentDocument
             try {
                 if (iframe.contentDocument) {
                     iframe.contentDocument.body.innerHTML = `

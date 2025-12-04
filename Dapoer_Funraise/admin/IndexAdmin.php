@@ -1,5 +1,4 @@
 <?php
-// === KONEKSI & AMBIL DATA ===
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -7,11 +6,9 @@ include "../config.php";
 
 $error = '';
 
-// Validasi koneksi PDO
 if (!isset($pdo) || !$pdo instanceof PDO) {
     die('<!DOCTYPE html><html><head><meta charset="utf-8"><title>Error</title></head><body><div style="padding:2rem;max-width:600px;margin:2rem auto;background:#fee;border-radius:8px;color:#c00;font-family:sans-serif;"><h2>❌ Koneksi Database Gagal</h2><p>File <code>config.php</code> tidak menyediakan variabel <code>$pdo</code> yang valid.</p></div></body></html>');
 }
-// Ambil data header
 $stmtHeader = $pdo->query("SELECT logo_path, business_name, tagline FROM header WHERE id = 1");
 $header = $stmtHeader->fetch(PDO::FETCH_ASSOC);
 if (!$header) {
@@ -22,7 +19,6 @@ if (!$header) {
     ];
 }
 
-// 🔹 AMBIL PARAMETER BULAN & TAHUN DARI GET
 $bulan_pilihan = isset($_GET['bulan']) ? (int)$_GET['bulan'] : (int)date('n');
 $tahun_pilihan = isset($_GET['tahun']) ? (int)$_GET['tahun'] : (int)date('Y');
 
@@ -37,7 +33,6 @@ try {
     $month_start = sprintf('%04d-%02d-01 00:00:00', $tahun_pilihan, $bulan_pilihan);
     $month_end   = date('Y-m-t 23:59:59', strtotime($month_start));
 
-    // Query data dasar
     $stmt = $pdo->prepare("SELECT COALESCE(SUM(total), 0) AS total_pendapatan FROM pesanan WHERE status = 'selesai' AND created_at BETWEEN :start AND :end");
     $stmt->execute(['start' => $month_start, 'end' => $month_end]);
     $pendapatan = (float) $stmt->fetchColumn();
@@ -62,7 +57,6 @@ try {
     $stmt->execute(['start' => $month_start, 'end' => $month_end]);
     $pesanan_dibatalkan = (int) $stmt->fetchColumn();
 
-    // 🔹 DATA UNTUK GRAFIK PENDAPATAN 12 BULAN TERAKHIR
     $grafik_pendapatan = [];
     for ($i = 11; $i >= 0; $i--) {
         $bulan_grafik = date('Y-m', strtotime("-$i months", strtotime($month_start)));
@@ -83,10 +77,8 @@ try {
         ];
     }
 
-    // 🔹 DATA UNTUK GRAFIK PRODUK TERLARIS (TOP 6 untuk grafik lingkaran)
     $produk_terlaris_grafik = [];
     
-    // Footer
     $stmtFooter = $pdo->prepare("SELECT main_text, copyright_text FROM footer_section WHERE id = 1 AND is_active = 1");
     $stmtFooter->execute();
     $footerData = $stmtFooter->fetch(PDO::FETCH_ASSOC);
@@ -96,21 +88,17 @@ try {
             'copyright_text' => '© 2025 <strong>Dapoer Funraise</strong>'
         ];
     }
-    // Ambil semua pesanan selesai
     $stmt = $pdo->prepare("SELECT produk, total FROM pesanan WHERE status = 'selesai' AND created_at BETWEEN :start AND :end");
     $stmt->execute(['start' => $month_start, 'end' => $month_end]);
     $all_pesanan = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Proses data produk dari pesanan
     $produk_data = [];
     $total_terjual_all = 0;
     
     foreach ($all_pesanan as $pesanan) {
-        // Coba decode JSON dari kolom produk
         $produk_list = @json_decode($pesanan['produk'], true);
         
         if (is_array($produk_list)) {
-            // Format JSON: [{"nama": "Tahu Crispy", "jumlah": 2, "subtotal": 30000}, ...]
             foreach ($produk_list as $produk_item) {
                 if (isset($produk_item['nama'])) {
                     $nama_produk = $produk_item['nama'];
@@ -128,10 +116,8 @@ try {
                 }
             }
         } else {
-            // Format string biasa: "Tahu Crispy, Pisang Coklat" atau "Tahu Crispy (2)"
             $produk_string = $pesanan['produk'];
             
-            // Coba parse format seperti "Tahu Crispy (2)"
             if (preg_match('/(.*?)\s*\((\d+)\)/', $produk_string, $matches)) {
                 $nama_produk = trim($matches[1]);
                 $jumlah = (int)$matches[2];
@@ -147,7 +133,6 @@ try {
                 $produk_data[$nama_produk]['pendapatan'] += $subtotal;
                 $total_terjual_all += $jumlah;
             } else {
-                // Ambil semua produk yang dipisah koma
                 $produk_array = array_map('trim', explode(',', $produk_string));
                 $jumlah_produk = count($produk_array);
                 $subtotal_per_produk = $jumlah_produk > 0 ? $pesanan['total'] / $jumlah_produk : 0;
@@ -170,12 +155,11 @@ try {
         }
     }
     
-    // Ambil info produk dari tabel produk
     $stmt = $pdo->prepare("SELECT id, Nama, Foto_Produk FROM produk");
     $stmt->execute();
     $all_produk = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Gabungkan data untuk grafik (TOP 6)
+    $produk_terlaris_grafik = [];
     $counter = 0;
     foreach ($all_produk as $produk) {
         $nama_produk = $produk['Nama'];
@@ -188,11 +172,10 @@ try {
                 'persentase' => $total_terjual_all > 0 ? round(($produk_data[$nama_produk]['terjual'] / $total_terjual_all) * 100, 1) : 0
             ];
             $counter++;
-            if ($counter >= 6) break; // Ambil hanya 6 untuk grafik lingkaran
+            if ($counter >= 6) break;
         }
     }
     
-    // Tambahkan produk yang tidak ada di tabel produk tapi ada di data penjualan
     if ($counter < 6) {
         foreach ($produk_data as $nama_produk => $data) {
             if ($counter >= 6) break;
@@ -218,7 +201,6 @@ try {
         }
     }
     
-    // Urutkan berdasarkan yang paling banyak terjual
     usort($produk_terlaris_grafik, function($a, $b) {
         return $b['total_terjual'] - $a['total_terjual'];
     });
@@ -530,7 +512,6 @@ $bulan_ini = namaBulan($bulan_pilihan);
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Data dari PHP dimasukkan ke dalam variabel JavaScript di sini
         const pendapatanData = <?= json_encode($grafik_pendapatan) ?>;
         const produkData = <?= json_encode($produk_terlaris_grafik) ?>;
     </script>

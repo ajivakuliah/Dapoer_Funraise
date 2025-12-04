@@ -12,7 +12,6 @@ function filterByStatus(status) {
         url.searchParams.delete('status');
     }
     
-    // Pertahankan filter bulan
     const bulan = document.getElementById('bulan').value;
     bulan ? url.searchParams.set('bulan', bulan) : url.searchParams.delete('bulan');
 

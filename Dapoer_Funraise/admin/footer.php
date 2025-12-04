@@ -7,16 +7,13 @@ if (!isset($_SESSION['username'])) {
     exit;
 }
 
-// Get footer data
 $footer = null;
 
 try {
-    // Get footer section - ambil data pertama saja
     $stmt = $pdo->query("SELECT * FROM footer_section ORDER BY id DESC LIMIT 1");
     $footer = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$footer) {
-        // Create default
         $stmt = $pdo->prepare("INSERT INTO footer_section (main_text, copyright_text) VALUES (?, ?)");
         $stmt->execute([
             '© 2024 Dapoer Funraise. Hak Cipta Dilindungi.',
@@ -34,10 +31,8 @@ try {
     die("Error: " . $e->getMessage());
 }
 
-// Handle form submission
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['update_footer'])) {
-        // Update footer text
         $copyright_text = trim($_POST['copyright_text']);
         $main_text = trim($_POST['main_text']);
         $is_active = isset($_POST['is_active']) ? 1 : 0;
@@ -50,16 +45,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     
-    // Jika ada error, redirect dengan error message
     header('Location: footer.php');
     exit;
 }
 
-// Tampilkan pesan success/error jika ada
 $success_msg = isset($_SESSION['success']) ? $_SESSION['success'] : '';
 $error_msg = isset($_SESSION['error']) ? $_SESSION['error'] : '';
 
-// Hapus session messages setelah ditampilkan
 if (isset($_SESSION['success'])) unset($_SESSION['success']);
 if (isset($_SESSION['error'])) unset($_SESSION['error']);
 ?>

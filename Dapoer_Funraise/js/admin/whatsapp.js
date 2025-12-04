@@ -28,7 +28,6 @@ function confirmDelete(buttonId, isActive) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Auto close alerts after 5 seconds
     setTimeout(() => {
         const alerts = document.querySelectorAll('.alert');
         alerts.forEach(alert => {
@@ -38,7 +37,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }, 5000);
 
-    // Toggle button confirmation
     document.addEventListener('submit', function(e) {
         const toggleButton = e.target.querySelector('button[name="toggle_active"]');
         if (toggleButton) {

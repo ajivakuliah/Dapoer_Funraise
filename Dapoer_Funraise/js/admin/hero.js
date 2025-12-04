@@ -9,11 +9,9 @@ function closeModal() {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Expose functions to global scope (diperlukan karena onclick di HTML)
     window.openEditModal = openEditModal;
     window.closeModal = closeModal;
     
-    // Close modal when clicking outside
     window.addEventListener('click', function(event) {
         const modal = document.getElementById('editModal');
         if (event.target === modal) {
@@ -21,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Auto close alerts after 5 seconds
     setTimeout(() => {
         const alerts = document.querySelectorAll('.alert');
         alerts.forEach(alert => {
@@ -31,7 +28,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }, 5000);
     
-    // Confirm before delete
     document.querySelectorAll('form[onsubmit]').forEach(form => {
         form.addEventListener('submit', function(e) {
             if (this.querySelector('button[name="delete_bg"]')) {
@@ -42,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Validate file size on upload
     document.querySelectorAll('input[type="file"]').forEach(input => {
         input.addEventListener('change', function(e) {
             const file = e.target.files[0];

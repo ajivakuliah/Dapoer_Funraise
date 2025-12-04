@@ -2,15 +2,12 @@
 session_start();
 include "../config.php";
 
-// Default to current month/year
 $bulan = isset($_GET['bulan']) ? (int)$_GET['bulan'] : date('n');
 $tahun = isset($_GET['tahun']) ? (int)$_GET['tahun'] : date('Y');
 
-// Validate month/year
 $bulan = ($bulan < 1 || $bulan > 12) ? date('n') : $bulan;
 $tahun = ($tahun < 2020 || $tahun > 2030) ? date('Y') : $tahun;
 
-// Get month name helper
 function namaBulan($bulan) {
     $nama = [
         1 => 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
@@ -37,19 +34,16 @@ function formatProduk($produkJson) {
 
 $bulan_nama = namaBulan($bulan);
 
-// Handle CSV download
 if (isset($_GET['download']) && $_GET['download'] == 'csv') {
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment;filename=laporan_keuangan_'.$bulan.'_'.$tahun.'.csv');
     header('Pragma: no-cache');
     header('Expires: 0');
     
-    // Add BOM untuk Excel compatibility
     echo "\xEF\xBB\xBF";
     
     $output = fopen('php://output', 'w');
     
-    // Header dengan kolom yang lebih rapi
     fputcsv($output, ['No', 'Tanggal', 'Waktu', 'Nama Pelanggan', 'Produk', 'Qty', 'Total (Rp)', 'Status']);
     
     $start_date = "$tahun-$bulan-01";
@@ -69,7 +63,7 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
     
     $counter = 1;
     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        // Format produk untuk CSV - satu baris per item produk
+        
         $items = json_decode($row['produk'], true);
         
         if (is_array($items) && !empty($items)) {
@@ -78,7 +72,6 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
                 $varian = !empty($item['varian']) ? ' (' . $item['varian'] . ')' : '';
                 $qty = (int)($item['qty'] ?? 1);
                 
-                // Baris pertama produk tampilkan semua info
                 if ($idx === 0) {
                     fputcsv($output, [
                         $counter,
@@ -87,11 +80,10 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
                         $row['nama_pelanggan'],
                         $nama . $varian,
                         $qty,
-                        $row['total'], // Tampilkan angka asli tanpa format
+                        $row['total'],
                         ucfirst($row['status'])
                     ]);
                 } else {
-                    // Baris produk berikutnya, kolom lain kosong
                     fputcsv($output, [
                         '',
                         '',
@@ -105,7 +97,6 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
                 }
             }
         } else {
-            // Jika produk tidak valid
             fputcsv($output, [
                 $counter,
                 date('d/m/Y', strtotime($row['created_at'])),
@@ -113,7 +104,7 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
                 $row['nama_pelanggan'],
                 $row['produk'],
                 '-',
-                $row['total'], // Tampilkan angka asli tanpa format
+                $row['total'],
                 ucfirst($row['status'])
             ]);
         }
@@ -121,7 +112,6 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
         $counter++;
     }
     
-    // Add separator and total row
     fputcsv($output, ['', '', '', '', '', '', '', '']);
     
     $stmt = $pdo->prepare("
@@ -136,12 +126,11 @@ if (isset($_GET['download']) && $_GET['download'] == 'csv') {
     ]);
     $total = $stmt->fetchColumn();
 
-    fputcsv($output, ['', '', '', '', '', 'TOTAL PENDAPATAN', $total, '']); // Tampilkan angka asli tanpa format
+    fputcsv($output, ['', '', '', '', '', 'TOTAL PENDAPATAN', $total, '']);
     fclose($output);
     exit;
 }
 
-// Get data for display
 $start_date = "$tahun-$bulan-01";
 $end_date = date('Y-m-t', strtotime($start_date));
 
@@ -158,7 +147,6 @@ $stmt->execute([
 ]);
 $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get total revenue
 $stmt = $pdo->prepare("
     SELECT SUM(total) as total_pendapatan 
     FROM pesanan 
@@ -449,7 +437,6 @@ $total_pendapatan = (float)$stmt->fetchColumn();
 </head>
 <body>
     <div class="container">
-        <!-- Page Header -->
         <div class="page-header">
             <h1 class="page-title">
                 <i class="fas fa-chart-line"></i> Laporan Keuangan
@@ -457,7 +444,6 @@ $total_pendapatan = (float)$stmt->fetchColumn();
             <p class="page-subtitle">Laporan penjualan dan pendapatan bulanan</p>
         </div>
 
-        <!-- Filter Form -->
         <div class="filter-card">
             <form method="GET" class="filter-form">
                 <div class="form-group">
@@ -497,7 +483,6 @@ $total_pendapatan = (float)$stmt->fetchColumn();
             </form>
         </div>
 
-        <!-- Stats Card -->
         <?php if (!empty($orders)): ?>
         <div class="stats-card">
             <div class="stats-grid">
@@ -523,7 +508,6 @@ $total_pendapatan = (float)$stmt->fetchColumn();
         </div>
         <?php endif; ?>
 
-        <!-- Report Table -->
         <div class="table-card">
             <div class="table-container">
                 <table>
@@ -556,7 +540,6 @@ $total_pendapatan = (float)$stmt->fetchColumn();
                                     <td class="text-end"><?= number_format($order['total'], 0, ',', '.') ?></td>
                                 </tr>
                             <?php endforeach; ?>
-                            <!-- Total Row -->
                             <tr class="total-row">
                                 <td colspan="4" class="text-end">
                                     <i class="fas fa-coins"></i> TOTAL PENDAPATAN
