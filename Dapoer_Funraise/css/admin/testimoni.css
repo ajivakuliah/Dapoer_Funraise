@@ -262,7 +262,6 @@ tr:hover {
     border-color: var(--primary);
 }
 
-/* Perbaikan: Spasi antar card statistik dan konten rata tengah */
 .stats-testimoni-wrapper {
     display: flex;
     justify-content: space-around;
@@ -283,7 +282,6 @@ tr:hover {
     transition: all 0.2s ease-in-out;
 }
 
-/* Perbaikan: Konten di tengah secara vertikal dan horizontal */
 .stat-icon-testi {
     font-size: 2.5rem;
     margin-right: 15px;
@@ -294,14 +292,13 @@ tr:hover {
     justify-content: center;
 }
 
-/* Perbaikan: Konten teks di tengah */
 .stat-content-testi {
     display: flex;
     flex-direction: column;
-    align-items: center; /* Diubah dari flex-start ke center */
+    align-items: center;
     justify-content: center;
     flex-grow: 1;
-    text-align: center; /* Ditambahkan untuk rata tengah teks */
+    text-align: center;
 }
 
 .stat-value-testi {
@@ -356,7 +353,7 @@ tr:hover {
     }
     
     .stat-content-testi {
-        align-items: center; /* Tetap center */
+        align-items: center;
     }
     
     .table-wrapper {

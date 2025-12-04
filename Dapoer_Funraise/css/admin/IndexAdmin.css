@@ -524,7 +524,6 @@ body {
     font-size: 14px;
 }
 
-/* Styling untuk chart lingkaran produk */
 .pie-chart-container {
     display: flex;
     align-items: center;
@@ -572,7 +571,6 @@ body {
     color: #9180BB;
 }
 
-/* FOOTER */
 footer {
     background: linear-gradient(180deg, #2a1f3d 100%, #5A46A2 0%);
     color: rgba(255, 255, 255, 0.85);
@@ -589,12 +587,8 @@ footer strong {
     font-weight: 700;
 }
 
-/* ================================ */
-/* MEDIA QUERIES START HERE */
-/* ================================ */
-
 @media (max-width: 1200px) {
-    /* Sudah didefinisikan di atas: .charts-grid { grid-template-columns: 1fr; } */
+
 }
 
 @media (max-width: 992px) {
@@ -612,14 +606,13 @@ footer strong {
         padding: 0 20px;
     }
     
-    /* Perbaikan agar logo dan menu terlihat jelas di topbar mobile */
     .topbar-left {
         display: flex;
         align-items: center;
     }
     
     .sidebar-brand {
-        padding: 19px 5px; /* Kurangi padding horizontal di sidebar brand saat mobile */
+        padding: 19px 5px;
     }
 
     .main-content {
@@ -657,7 +650,6 @@ footer strong {
 }
 
 @media (max-width: 768px) {
-    /* Perbaikan untuk sidebar-brand agar tidak tumpang tindih saat di sidebar */
     .sidebar-brand h2 {
         font-size: 1.3rem;
         gap: 8px;
@@ -740,7 +732,6 @@ footer strong {
         height: 32px;
     }
     .user-info {
-        /* Sembunyikan role agar lebih ringkas */
         display: none; 
     }
 }

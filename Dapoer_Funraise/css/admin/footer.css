@@ -271,10 +271,6 @@ label {
     padding-right: 20px;
 }
 
-/* ================================ */
-/* MEDIA QUERIES START HERE */
-/* ================================ */
-
 @media (max-width: 992px) {
     .compact-form {
         grid-template-columns: 1fr;
@@ -290,7 +286,7 @@ label {
     }
     
     .form-group:last-of-type {
-        margin-bottom: 0; /* Hapus margin bawah jika ini elemen terakhir sebelum form-actions */
+        margin-bottom: 0;
     }
 }
 
