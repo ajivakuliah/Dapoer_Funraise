@@ -10,19 +10,23 @@ if (!isset($_SESSION['username'])) {
 $header = null;
 
 try {
-    $stmt = $pdo->query("SELECT * FROM header ORDER BY id DESC LIMIT 1");
+    $stmt = $pdo->prepare("SELECT * FROM header WHERE id = 1");
+    $stmt->execute();
     $header = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$header) {
-        $stmt = $pdo->prepare("INSERT INTO header (logo_path, business_name, tagline) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("
+            INSERT INTO header (id, logo_path, business_name, tagline) 
+            VALUES (1, ?, ?, ?)
+        ");
         $stmt->execute([
-            'assets/logo.png',
+            'uploads/logo.png',
             'Dapoer Funraise',
             'Cemilan rumahan yang bikin nagih!'
         ]);
         $header = [
-            'id' => $pdo->lastInsertId(), 
-            'logo_path' => 'assets/logo.png',
+            'id' => 1,
+            'logo_path' => 'uploads/logo.png',
             'business_name' => 'Dapoer Funraise',
             'tagline' => 'Cemilan rumahan yang bikin nagih!',
             'updated_at' => date('Y-m-d H:i:s')
@@ -41,6 +45,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $logo_path = $header['logo_path'];
         
         if (isset($_FILES['logo']) && $_FILES['logo']['error'] == 0) {
+            $uploadDir = '../uploads/logo/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            
             $allowed_extensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
             $file_name = $_FILES['logo']['name'];
             $file_tmp = $_FILES['logo']['tmp_name'];
@@ -50,13 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (in_array($file_ext, $allowed_extensions)) {
                 if ($file_size <= 2097152) {
                     $new_file_name = 'logo_' . time() . '.' . $file_ext;
-                    $upload_path = '../assets/' . $new_file_name;
+                    $upload_path = '../uploads/logo/' . $new_file_name;
                     
                     if (move_uploaded_file($file_tmp, $upload_path)) {
-                        if ($logo_path != 'assets/logo.png' && file_exists('../' . $logo_path)) {
+                        $defaultLogo = 'uploads/logo.png';
+                        if ($logo_path != $defaultLogo && file_exists('../' . $logo_path)) {
                             unlink('../' . $logo_path);
                         }
-                        $logo_path = 'assets/' . $new_file_name;
+                        $logo_path = 'uploads/logo/' . $new_file_name;
                         $_SESSION['success'] = 'Logo berhasil diupload';
                     } else {
                         $_SESSION['error'] = 'Gagal mengupload logo';
@@ -69,11 +79,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         }
         
-        $stmt = $pdo->prepare("UPDATE header SET logo_path = ?, business_name = ?, tagline = ?, updated_at = NOW() WHERE id = ?");
-        if ($stmt->execute([$logo_path, $business_name, $tagline, $header['id']])) {
-            $_SESSION['success'] = 'Header berhasil diperbarui';
-            header('Location: header.php');
-            exit;
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO header (id, logo_path, business_name, tagline, updated_at) 
+                VALUES (1, ?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE 
+                    logo_path = VALUES(logo_path),
+                    business_name = VALUES(business_name),
+                    tagline = VALUES(tagline),
+                    updated_at = VALUES(updated_at)
+            ");
+            
+            if ($stmt->execute([$logo_path, $business_name, $tagline])) {
+                $_SESSION['success'] = 'Header berhasil diperbarui';
+                header('Location: header.php');
+                exit;
+            }
+        } catch (PDOException $e) {
+            $_SESSION['error'] = 'Gagal menyimpan ke database: ' . $e->getMessage();
         }
     }
     
@@ -127,6 +150,7 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
                     <li>Logo akan ditampilkan di bagian atas semua halaman website</li>
                     <li>Nama bisnis dan tagline akan muncul di dekat logo</li>
                     <li>Format logo yang didukung: JPG, PNG, GIF, WebP (max 2MB)</li>
+                    <li>Logo disimpan di folder: uploads/logo/</li> <!-- PERBAIKAN 9: Tambah info -->
                 </ul>
             </div>
             
@@ -144,9 +168,11 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
                     <div class="current-file-info">
                         <i class="fas fa-info-circle"></i>
                         Logo saat ini: <?= htmlspecialchars(basename($header['logo_path'])) ?>
+                        <br>
+                        <small>Path: <?= htmlspecialchars($header['logo_path']) ?></small> <!-- PERBAIKAN 10: Tampilkan full path -->
                     </div>
                     <span class="help-text">
-                        Ukuran maksimal: 2MB | Format: JPG, PNG, GIF, WebP
+                        Ukuran maksimal: 2MB | Format: JPG, PNG, GIF, WebP | Disimpan di: uploads/logo/
                     </span>
                 </div>
                 
@@ -183,11 +209,11 @@ if (isset($_SESSION['error'])) unset($_SESSION['error']);
                         </label>
                         <div class="info-value">
                             <span class="timestamp">
-                                <?= date('d M Y H:i:s') ?>
+                                <?= isset($header['updated_at']) ? date('d M Y H:i:s', strtotime($header['updated_at'])) : date('d M Y H:i:s') ?>
                             </span>
                         </div>
                         <span class="help-text">
-                            Timestamp akan diupdate otomatis
+                            Timestamp akan diupdate otomatis saat disimpan
                         </span>
                     </div>
                 </div>
